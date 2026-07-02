@@ -1,0 +1,23 @@
+spring:
+  application:
+    name: learninglm
+  datasource:
+    url: jdbc:mysql://localhost:3306/learninglm
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+jwt:
+  secret: ${JWT_SECRET}
+  access-token-expiration-ms: 3600000
+  refresh-token-expiration-ms: 1209600000
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
