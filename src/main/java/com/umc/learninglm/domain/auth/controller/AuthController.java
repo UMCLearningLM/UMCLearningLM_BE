@@ -5,6 +5,7 @@ import com.umc.learninglm.domain.auth.dto.request.EmailVerificationVerifyRequest
 import com.umc.learninglm.domain.auth.dto.request.LoginRequest;
 import com.umc.learninglm.domain.auth.dto.request.LogoutRequest;
 import com.umc.learninglm.domain.auth.dto.request.PasswordResetRequest;
+import com.umc.learninglm.domain.auth.dto.request.ProfileUpdateRequest;
 import com.umc.learninglm.domain.auth.dto.request.ReissueRequest;
 import com.umc.learninglm.domain.auth.dto.request.SignupRequest;
 import com.umc.learninglm.domain.auth.dto.response.AuthTokenResponse;
@@ -14,7 +15,11 @@ import com.umc.learninglm.domain.auth.dto.response.LogoutResponse;
 import com.umc.learninglm.domain.auth.dto.response.MeResponse;
 import com.umc.learninglm.domain.auth.dto.response.OAuthAuthorizationResponse;
 import com.umc.learninglm.domain.auth.dto.response.PasswordResetResponse;
+import com.umc.learninglm.domain.auth.dto.response.ProfileResponse;
 import com.umc.learninglm.domain.auth.dto.response.ReissueResponse;
+import com.umc.learninglm.domain.auth.enums.UserProvider;
+import com.umc.learninglm.domain.auth.enums.UserRole;
+import com.umc.learninglm.domain.auth.enums.UserStatus;
 import com.umc.learninglm.global.common.BaseResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -31,6 +36,8 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.time.LocalDateTime;
 
 @Tag(name = "Auth", description = "회원가입, 로그인, 토큰 및 이메일 인증 API")
 @RestController
@@ -117,6 +124,33 @@ public class AuthController {
 	public BaseResponse<MeResponse> me() {
 		return BaseResponse.success(new MeResponse(
 				1L, "user@example.com", "홍길동", "LOCAL", null));
+	}
+
+	@PostMapping("/me/profile")
+	@Operation(summary = "프로필 수정", description = "본인의 이메일, 비밀번호 또는 닉네임을 수정합니다. 이메일 변경 시 이메일 인증 토큰이 필요합니다.",
+			security = @SecurityRequirement(name = "bearerAuth"))
+	@ApiResponses({
+			@ApiResponse(responseCode = "200", description = "프로필 수정 성공"),
+			@ApiResponse(responseCode = "400", description = "AUTH40001, AUTH40004~AUTH40006, AUTH40017, AUTH40019~AUTH40022: 프로필 입력 오류"),
+			@ApiResponse(responseCode = "401", description = "AUTH40103~AUTH40105, AUTH40111~AUTH40114: 인증 토큰 또는 현재 비밀번호 오류"),
+			@ApiResponse(responseCode = "403", description = "AUTH40303: 이메일 인증 토큰 목적 불일치"),
+			@ApiResponse(responseCode = "404", description = "AUTH40401: 사용자 없음")
+	})
+	@Parameter(name = "X-Email-Verification-Token", description = "이메일 변경 시 필요한 EMAIL_CHANGE 목적의 임시 Access Token",
+			in = ParameterIn.HEADER, required = false, example = "temporary-access-token")
+	public BaseResponse<ProfileResponse> updateProfile(
+			@RequestHeader(value = "X-Email-Verification-Token", required = false) String emailVerificationToken,
+			@Valid @RequestBody ProfileUpdateRequest request) {
+		String email = request.email() != null ? request.email() : "user@example.com";
+		String nickname = request.nickname() != null ? request.nickname() : "홍길동";
+		return BaseResponse.success(new ProfileResponse(
+				1L,
+				email,
+				nickname,
+				UserProvider.LOCAL,
+				UserRole.USER,
+				UserStatus.ACTIVE,
+				LocalDateTime.of(2026, 7, 14, 21, 0)));
 	}
 
 	@PostMapping("/email/request")
