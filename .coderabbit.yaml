@@ -1,0 +1,49 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+language: "ko"
+
+reviews:
+  profile: "chill"
+  request_changes_workflow: false
+  high_level_summary: true
+  review_status: true
+  collapse_walkthrough: false
+  changed_files_summary: true
+  poem: false
+  auto_review:
+    enabled: true
+    drafts: false
+  path_filters:
+    - "!**/*.lock"
+    - "!**/build/**"
+    - "!**/.gradle/**"
+    - "!**/gradlew*"
+  instructions: |
+    이 프로젝트는 Java 17 + Spring Boot(Gradle), 도메인 기반 아키텍처 백엔드입니다.
+    리뷰는 한국어로 작성해주세요.
+
+    [도메인 구조]
+    - 확정 도메인: auth, home, tutorial, block, flow, storage, library (7개)
+    - 각 도메인은 controller/service/repository/entity/dto 구조를 따릅니다.
+    - 위 7개 외 새 최상위 도메인을 임의로 만들면 지적해주세요.
+
+    [응답/에러 규약]
+    - 모든 API 응답은 BaseResponse<T>로 감쌉니다.
+    - 에러 코드는 {도메인}{HTTP상태}{순번} 5자리 형식입니다 (예: FLOW40401, AUTH40103).
+    - 새 에러 코드를 만들면 공통 규약의 에러 코드 표에 추가돼야 합니다.
+
+    [데이터 규약]
+    - 요청/응답 JSON 필드는 camelCase, DB 컬럼은 snake_case입니다.
+    - ENUM 값은 대문자 영문 코드입니다 (GUIDED, PASS, TEMPLATE 등).
+    - 날짜/시간은 ISO 8601 문자열입니다 (LocalDateTime).
+
+    [껍데기 단계 주의]
+    - 서비스 로직 미구현 껍데기 단계에서는, 응답 필드를 null이 아닌 예시값으로
+      채워 FE가 Swagger에서 응답 구조를 확인할 수 있어야 합니다.
+    - BaseResponse.success(null)처럼 result가 통째로 비는 응답은 지적해주세요.
+
+    [Swagger 문서-검증 일치]
+    - @Parameter(required=true)로 문서화했다면 실제 @RequestParam도 required=true여야
+      합니다. 문서와 실제 검증이 어긋나면 지적해주세요.
+
+chat:
+  auto_reply: true
