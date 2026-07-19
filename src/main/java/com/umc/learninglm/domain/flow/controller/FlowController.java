@@ -134,7 +134,7 @@ public class FlowController {
 			@PathVariable Long flowId, @Valid @RequestBody FlowVerifyRequest request) {
 		return BaseResponse.success(new FlowVerifyResponse(
 				"FAIL",
-				new FlowVerifySummaryResponse(3, 1, 1),
+				new FlowVerifySummaryResponse(1, 1, 0),
 				List.of(
 						new FlowVerifyRuleResultResponse(1L, "입력 노드 CORE 블록", "PASS",
 								"입력 단계에 필수 블록 1개 이상이 포함되어야 합니다.",

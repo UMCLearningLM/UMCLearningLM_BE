@@ -2,6 +2,7 @@ package com.umc.learninglm.domain.flow.dto.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 
 import java.util.Map;
 
@@ -13,6 +14,7 @@ public record FlowBlockOptionRequest(
 
 		@Schema(example = "1")
 		@NotNull(message = "블록 순서는 필수입니다.")
+		@Positive(message = "블록 순서는 1 이상이어야 합니다.")
 		Integer blockOrder,
 
 		@Schema(description = "블록별 옵션 (자유 형식 JSON)")
