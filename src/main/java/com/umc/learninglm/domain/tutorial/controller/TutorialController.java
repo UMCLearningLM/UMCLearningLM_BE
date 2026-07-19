@@ -16,6 +16,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -101,7 +102,7 @@ public class TutorialController {
 	})
 	public BaseResponse<TutorialProgressStartResponse> startTutorial(
 			@PathVariable Long tutorialId,
-			@RequestBody TutorialProgressStartRequest request) {
+			@Valid @RequestBody TutorialProgressStartRequest request) {
 		return BaseResponse.success(new TutorialProgressStartResponse(
 				tutorialId, 1, 5, 0, "IN_PROGRESS", request.flowId(), null));
 	}
