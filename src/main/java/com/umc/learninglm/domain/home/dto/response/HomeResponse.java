@@ -110,6 +110,10 @@ public record HomeResponse(
             String thumbnailUrl,
             LocalDateTime updatedAt
     ) implements RecentSavedItemResponse {
+
+        public TutorialSavedItemResponse {
+            itemType = "TUTORIAL";
+        }
     }
 
     public record CopiedFlowSavedItemResponse(
@@ -122,5 +126,9 @@ public record HomeResponse(
             AuthorResponse originalAuthor,
             LocalDateTime updatedAt
     ) implements RecentSavedItemResponse {
+
+        public CopiedFlowSavedItemResponse {
+            itemType = "COPIED_FLOW";
+        }
     }
 }
