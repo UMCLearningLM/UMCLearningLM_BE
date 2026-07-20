@@ -3,7 +3,7 @@
 AI를 단순 질문/답변 도구에서 실제 작업 흐름을 설계하는 도구로 확장하는 학습 플랫폼
 
 LearningLM의 백엔드 저장소입니다.
-React/TypeScript 기반 프론트엔드와 통신하며, 튜토리얼·Studio 워크플로우·저장/공유 기능을 위한 REST API를 제공합니다.
+React/TypeScript 기반 프론트엔드와 통신하며, 튜토리얼·Flow 워크플로우·저장/공유 기능을 위한 REST API를 제공합니다.
 Java, Spring Boot를 기반으로 하며, 유지보수성을 위해 도메인 단위(Domain-based) 아키텍처를 따릅니다.
 
 ---
@@ -96,7 +96,8 @@ src/main/java/com/umc/learninglm/
 │   │
 │   ├── home/                  # 홈 화면 데이터 제공
 │   ├── tutorial/              # 공식 튜토리얼 및 단계별 가이드 API
-│   ├── studio/                # 워크플로우 제작 Studio API
+│   ├── block/                 # 스튜디오 블록 팔레트 API
+│   ├── flow/                  # 워크플로우(흐름) 생성/편집/검수/미리보기 API
 │   ├── storage/               # My Storage (저장 워크플로우 관리)
 │   └── library/               # Public Library (공개 워크플로우 탐색)
 │
@@ -137,7 +138,7 @@ src/main/java/com/umc/learninglm/
 | 타입 | 설명 | 예시 |
 | --- | --- | --- |
 | feat | 새로운 기능 추가 | `feat/auth-jwt_hyunsu` |
-| fix | 버그 수정 | `fix/studio-save_hyunsu` |
+| fix | 버그 수정 | `fix/flow-save_hyunsu` |
 | refactor | 코드 구조 개선 | `refactor/base-response_hyunsu` |
 | docs | 문서 수정 | `docs/readme_hyunsu` |
 | chore | 빌드, 설정 변경 | `chore/gradle-deps_hyunsu` |
@@ -150,7 +151,7 @@ src/main/java/com/umc/learninglm/
 
 ```
 feat: JWT 로그인 API 구현
-fix: Studio 저장 시 stage_order 누락 수정
+fix: Flow 저장 시 stage_order 누락 수정
 refactor: 공통 응답 포맷 BaseResponse 분리
 docs: README 작성
 chore: Gradle 의존성 정리
