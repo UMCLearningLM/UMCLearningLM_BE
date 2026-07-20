@@ -19,7 +19,7 @@ LearningLM 백엔드. Java 17 + Spring Boot(Gradle), 도메인 기반(Domain-bas
 
 `src/main/java/com/umc/learninglm/`
 - `global/` — 공통 응답 포맷(`BaseResponse`), 예외 처리(`GlobalExceptionHandler`, `ErrorCode`), Security/CORS/Swagger 설정
-- `domain/{auth,home,tutorial,studio,storage,library}` — 도메인별 패키지. 현재는 `package-info.java`로 담당 화면(WF 번호)만 표시된 뼈대 상태이며, 실제 구현은 팀원별로 진행 예정.
+- `domain/{auth,home,tutorial,block,flow,storage,library}` — 도메인별 패키지. 현재는 `package-info.java`로 담당 화면(WF 번호)만 표시된 뼈대 상태이며, 실제 구현은 팀원별로 진행 예정.
 
 새 도메인 로직을 추가할 때는 `controller/service/repository/entity/dto` 서브패키지 구조를 따르고, 응답은 `BaseResponse<T>`로 감싼다.
 
