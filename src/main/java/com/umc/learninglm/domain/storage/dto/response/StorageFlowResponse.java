@@ -8,6 +8,8 @@ public record StorageFlowResponse(
 		@Schema(example = "501") Long flowId,
 		@Schema(example = "제품 리뷰 요약기") String title,
 		@Schema(description = "흐름 요약 (없으면 null)", nullable = true) String summary,
+		@Schema(description = "난이도 코드", example = "BEGINNER", allowableValues = {"BEGINNER", "BASIC", "ADVANCED"}) String difficulty,
+		@Schema(description = "카테고리 정보") StorageCategoryResponse category,
 		@Schema(description = "제작 모드 (이 목록엔 CREATE만 노출)", example = "CREATE", allowableValues = {"CREATE"}) String mode,
 		@Schema(description = "공개 범위", example = "PRIVATE", allowableValues = {"PRIVATE", "PUBLIC"}) String visibility,
 		@Schema(description = "흐름 상태", example = "COMPLETED", allowableValues = {"DRAFT", "COMPLETED"}) String status,

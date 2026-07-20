@@ -7,7 +7,9 @@ import java.time.LocalDateTime;
 public record StorageTutorialResponse(
 		@Schema(example = "1") Long tutorialId,
 		@Schema(example = "AI로 자료조사 흐름 만들기") String title,
+		@Schema(example = "검색·요약·정리 블록으로 리서치 흐름 완성") String summary,
 		@Schema(description = "난이도 코드", example = "BEGINNER", allowableValues = {"BEGINNER", "BASIC", "ADVANCED"}) String difficulty,
+		@Schema(description = "카테고리 정보") StorageCategoryResponse category,
 		@Schema(description = "썸네일 이미지 URL (없으면 null)", nullable = true) String thumbnailUrl,
 		@Schema(description = "진행 상태", example = "IN_PROGRESS", allowableValues = {"NOT_STARTED", "IN_PROGRESS", "COMPLETED"}) String status,
 		@Schema(example = "4") int currentStepOrder,
