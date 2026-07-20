@@ -40,7 +40,7 @@ import java.util.Map;
 public class FlowController {
 
 	@PostMapping
-	@Operation(summary = "흐름 생성 (스튜디오 진입)", description = "스튜디오 진입 시 빈 흐름(또는 튜토리얼/복사본 기반)을 생성합니다. 생성 직후 status는 항상 DRAFT입니다.",
+	@Operation(summary = "흐름 생성 (스튜디오 진입)", description = "스튜디오 진입 시 빈 흐름(또는 튜토리얼/복사본 기반)을 생성합니다. 생성 직후 status는 항상 DRAFT이며, title은 서버가 임시 제목을 자동 부여합니다. 실제 제목은 저장(PUT /flows/{flowId}) 시 입력받습니다.",
 			security = @SecurityRequirement(name = "bearerAuth"))
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "흐름 생성 성공"),
@@ -49,7 +49,7 @@ public class FlowController {
 	})
 	public BaseResponse<FlowCreateResponse> createFlow(@Valid @RequestBody FlowCreateRequest request) {
 		return BaseResponse.success(new FlowCreateResponse(
-				12L, request.mode(), "DRAFT", LocalDateTime.of(2026, 7, 5, 14, 0)));
+				12L, "제목 없는 흐름", request.mode(), "DRAFT", LocalDateTime.of(2026, 7, 5, 14, 0)));
 	}
 
 	@GetMapping("/{flowId}")
