@@ -61,7 +61,7 @@ public class TutorialController {
 			@PathVariable Long tutorialId,
 			@RequestHeader(value = "Authorization", required = false) String authorization) {
 		return BaseResponse.success(new TutorialDetailResponse(
-				tutorialId, null, null, null, null, 0, null,
+				tutorialId, null, null, null, List.of(), 0, null,
 				List.of(), List.of(), null, List.of(), List.of(), null, false));
 	}
 
