@@ -17,8 +17,11 @@ import com.umc.learninglm.domain.auth.dto.response.OAuthAuthorizationResponse;
 import com.umc.learninglm.domain.auth.dto.response.PasswordResetResponse;
 import com.umc.learninglm.domain.auth.dto.response.ProfileResponse;
 import com.umc.learninglm.domain.auth.dto.response.ReissueResponse;
+import com.umc.learninglm.domain.auth.enums.VerificationType;
 import com.umc.learninglm.domain.auth.service.AuthService;
 import com.umc.learninglm.global.common.BaseResponse;
+import com.umc.learninglm.global.error.CustomException;
+import com.umc.learninglm.global.error.ErrorCode;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -39,6 +42,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
+
+	private static final String BEARER_PREFIX = "Bearer ";
 
 	private final AuthService authService;
 	private final String googleAuthorizationEntryPoint;
@@ -223,8 +228,13 @@ public class AuthController {
 	})
 	public BaseResponse<EmailVerificationResponse> requestEmailVerification(
 			Authentication authentication,
+			@Parameter(hidden = true)
+			@RequestHeader(value = "Authorization", required = false) String authorization,
 			@Valid @RequestBody EmailVerificationRequest request) {
-		String authenticatedEmail = authentication == null ? null : authentication.getName();
+		String authenticatedEmail = resolveAuthenticatedEmail(
+				authentication,
+				authorization,
+				request.verificationType());
 		return BaseResponse.success(authService.requestEmailVerification(authenticatedEmail, request));
 	}
 
@@ -253,9 +263,31 @@ public class AuthController {
 	})
 	public BaseResponse<EmailVerificationVerifyResponse> verifyEmail(
 			Authentication authentication,
+			@Parameter(hidden = true)
+			@RequestHeader(value = "Authorization", required = false) String authorization,
 			@Valid @RequestBody EmailVerificationVerifyRequest request) {
-		String authenticatedEmail = authentication == null ? null : authentication.getName();
+		String authenticatedEmail = resolveAuthenticatedEmail(
+				authentication,
+				authorization,
+				request.verificationType());
 		return BaseResponse.success(authService.verifyEmailCode(authenticatedEmail, request));
+	}
+
+	private String resolveAuthenticatedEmail(
+			Authentication authentication,
+			String authorization,
+			VerificationType verificationType) {
+		if (verificationType == VerificationType.LOGIN
+				&& (!hasBearerToken(authorization) || authentication == null)) {
+			throw new CustomException(ErrorCode.ACCESS_TOKEN_MISSING);
+		}
+		return authentication == null ? null : authentication.getName();
+	}
+
+	private boolean hasBearerToken(String authorization) {
+		return authorization != null
+				&& authorization.startsWith(BEARER_PREFIX)
+				&& !authorization.substring(BEARER_PREFIX.length()).isBlank();
 	}
 
 	@PostMapping("/password")

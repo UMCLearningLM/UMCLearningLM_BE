@@ -188,8 +188,8 @@ class AuthOpenApiTest {
     }
 
     @Test
-    void emailVerificationReturnsDomainErrorCodeForInvalidVerificationType() throws Exception {
-        mockMvc.perform(post("/api/auth/email/request")
+	void emailVerificationReturnsDomainErrorCodeForInvalidVerificationType() throws Exception {
+		mockMvc.perform(post("/api/auth/email/request")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -198,9 +198,40 @@ class AuthOpenApiTest {
                                   "email": "user@example.com"
                                 }
                                 """))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.code").value("AUTH40010"));
-    }
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.code").value("AUTH40010"));
+	}
+
+	@Test
+	void loginEmailVerificationRequestRequiresAccessTokenHeader() throws Exception {
+		mockMvc.perform(post("/api/auth/email/request")
+						.contentType(MediaType.APPLICATION_JSON)
+						.content("""
+								{
+								  "verificationType": "LOGIN",
+								  "purpose": "EMAIL_CHANGE",
+								  "email": "new@example.com"
+								}
+								"""))
+				.andExpect(status().isUnauthorized())
+				.andExpect(jsonPath("$.code").value("AUTH40103"));
+	}
+
+	@Test
+	void loginEmailVerificationVerifyRequiresAccessTokenHeader() throws Exception {
+		mockMvc.perform(post("/api/auth/email/verify")
+						.contentType(MediaType.APPLICATION_JSON)
+						.content("""
+								{
+								  "verificationType": "LOGIN",
+								  "purpose": "EMAIL_CHANGE",
+								  "email": "new@example.com",
+								  "code": "A1b2C3d4E5"
+								}
+								"""))
+				.andExpect(status().isUnauthorized())
+				.andExpect(jsonPath("$.code").value("AUTH40103"));
+	}
 
     @SpringBootConfiguration
     @EnableAutoConfiguration(exclude = {
