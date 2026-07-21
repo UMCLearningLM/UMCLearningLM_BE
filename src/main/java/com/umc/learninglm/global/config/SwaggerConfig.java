@@ -18,6 +18,7 @@ public class SwaggerConfig {
 
 	private static final String BEARER_AUTH = "bearerAuth";
 	private static final String EMAIL_VERIFICATION_TOKEN = "emailVerificationToken";
+	private static final String PROFILE_UPDATE_PATH = "/auth/me/profile";
 	private static final String EMAIL_REQUEST_PATH = "/auth/email/request";
 	private static final String EMAIL_VERIFY_PATH = "/auth/email/verify";
 
@@ -53,9 +54,21 @@ public class SwaggerConfig {
 				pathsWithoutApiPrefix.addPathItem(documentedPath, pathItem);
 			});
 			openApi.setPaths(pathsWithoutApiPrefix);
+			setProfileSecurity(pathsWithoutApiPrefix);
 			setOptionalBearerSecurity(pathsWithoutApiPrefix, EMAIL_REQUEST_PATH);
 			setOptionalBearerSecurity(pathsWithoutApiPrefix, EMAIL_VERIFY_PATH);
 		};
+	}
+
+	private void setProfileSecurity(Paths paths) {
+		if (paths.get(PROFILE_UPDATE_PATH) == null || paths.get(PROFILE_UPDATE_PATH).getPost() == null) {
+			return;
+		}
+		paths.get(PROFILE_UPDATE_PATH).getPost().setSecurity(List.of(
+				new SecurityRequirement()
+						.addList(BEARER_AUTH)
+						.addList(EMAIL_VERIFICATION_TOKEN),
+				new SecurityRequirement().addList(BEARER_AUTH)));
 	}
 
 	private void setOptionalBearerSecurity(Paths paths, String path) {

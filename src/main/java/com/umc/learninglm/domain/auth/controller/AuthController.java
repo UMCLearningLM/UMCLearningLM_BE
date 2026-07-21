@@ -176,7 +176,7 @@ public class AuthController {
 
 			• 비밀번호 변경: 로컬 계정만 가능하며 currentPassword와 newPassword를 함께 입력합니다.
 
-			• 이메일 변경: POST /auth/email/request와 POST /auth/email/verify를 각각 verificationType=LOGIN, purpose=EMAIL_CHANGE, 변경할 새 이메일로 호출합니다. 검증 응답의 temporaryAccessToken을 **X-Email-Verification-Token** 헤더에 입력하고 Body의 email에도 인증한 새 이메일을 입력합니다.
+			• 이메일 변경: POST /auth/email/request와 POST /auth/email/verify를 각각 verificationType=LOGIN, purpose=EMAIL_CHANGE, 변경할 새 이메일로 호출합니다. 검증 응답의 temporaryAccessToken을 Swagger 상단 **Authorize > emailVerificationToken**에 등록하고 Body의 email에도 인증한 새 이메일을 입력합니다.
 
 			이메일 변경용 임시 토큰을 bearerAuth에 넣으면 안 됩니다. bearerAuth에는 기존 로그인 Access Token을 유지합니다.
 			""",
@@ -190,8 +190,7 @@ public class AuthController {
 	})
 	public BaseResponse<ProfileResponse> updateProfile(
 			Authentication authentication,
-			@Parameter(description = "이메일 변경 시 필요한 EMAIL_CHANGE 목적의 임시 Access Token",
-					example = "eyJhbGciOiJIUzM4NCJ9.email-verification.signature")
+			@Parameter(hidden = true)
 			@RequestHeader(value = "X-Email-Verification-Token", required = false) String emailVerificationToken,
 			@Valid @RequestBody ProfileUpdateRequest request) {
 		return BaseResponse.success(authService.updateProfile(
