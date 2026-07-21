@@ -5,7 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 
 @Schema(description = "로그아웃 요청")
 public record LogoutRequest(
-		@Schema(description = "폐기할 Refresh Token", example = "refresh-token")
+		@Schema(description = "폐기할 Refresh Token", example = "eyJhbGciOiJIUzM4NCJ9.refresh.signature")
 		@NotBlank(message = "리프레시 토큰이 필요합니다.")
 		String refreshToken
 ) {

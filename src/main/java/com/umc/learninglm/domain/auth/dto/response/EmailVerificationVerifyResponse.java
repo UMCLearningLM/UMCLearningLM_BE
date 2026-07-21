@@ -10,7 +10,7 @@ public record EmailVerificationVerifyResponse(
 		@Schema(example = "PASSWORD_RESET") VerificationPurpose purpose,
 		@Schema(example = "user@example.com") String email,
 		@Schema(example = "true") boolean verified,
-		@Schema(example = "temporary-access-token") String temporaryAccessToken,
-		@Schema(example = "300") int expiresInSeconds
+		@Schema(example = "eyJhbGciOiJIUzM4NCJ9.email-verification.signature") String temporaryAccessToken,
+		@Schema(example = "1800") int expiresInSeconds
 ) {
 }
