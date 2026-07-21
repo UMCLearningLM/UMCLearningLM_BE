@@ -12,6 +12,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -19,7 +20,10 @@ import org.hibernate.annotations.ColumnDefault;
 
 @Getter
 @Entity
-@Table(name = "users")
+@Table(name = "users", uniqueConstraints = {
+		@UniqueConstraint(name = "uk_users_email", columnNames = "email"),
+		@UniqueConstraint(name = "uk_users_provider_provider_id", columnNames = {"provider", "provider_id"})
+})
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class User extends BaseTimeEntity {
 
@@ -33,6 +37,9 @@ public class User extends BaseTimeEntity {
 
 	@Column(name = "password_hash", length = 255)
 	private String passwordHash;
+
+	@Column(name = "provider_id", length = 255)
+	private String providerId;
 
 	@Column(name = "nickname", nullable = false, length = 50)
 	private String nickname;
@@ -51,4 +58,44 @@ public class User extends BaseTimeEntity {
 	@Column(name = "status", nullable = false, length = 30)
 	@ColumnDefault("'ACTIVE'")
 	private UserStatus status = UserStatus.ACTIVE;
+
+	public static User createLocal(String email, String passwordHash, String nickname) {
+		User user = new User();
+		user.email = email;
+		user.passwordHash = passwordHash;
+		user.providerId = null;
+		user.nickname = nickname;
+		user.provider = UserProvider.LOCAL;
+		user.role = UserRole.USER;
+		user.status = UserStatus.ACTIVE;
+		return user;
+	}
+
+	public static User createSocial(
+			String email,
+			UserProvider provider,
+			String providerId,
+			String nickname) {
+		User user = new User();
+		user.email = email;
+		user.passwordHash = null;
+		user.providerId = providerId;
+		user.nickname = nickname;
+		user.provider = provider;
+		user.role = UserRole.USER;
+		user.status = UserStatus.ACTIVE;
+		return user;
+	}
+
+	public void changePassword(String passwordHash) {
+		this.passwordHash = passwordHash;
+	}
+
+	public void changeEmail(String email) {
+		this.email = email;
+	}
+
+	public void changeNickname(String nickname) {
+		this.nickname = nickname;
+	}
 }
