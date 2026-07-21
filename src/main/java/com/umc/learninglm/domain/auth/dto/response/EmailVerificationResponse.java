@@ -9,6 +9,7 @@ public record EmailVerificationResponse(
 		@Schema(example = "NON_LOGIN") VerificationType verificationType,
 		@Schema(example = "SIGNUP") VerificationPurpose purpose,
 		@Schema(example = "user@example.com") String email,
-		@Schema(example = "300") int expiresInSeconds
+		@Schema(example = "1800") int expiresInSeconds,
+		@Schema(description = "SMTP 연동 전 개발 확인용 인증코드", example = "A1b2C3d4E5") String verificationCode
 ) {
 }
