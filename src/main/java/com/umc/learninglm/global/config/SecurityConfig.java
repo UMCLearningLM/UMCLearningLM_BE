@@ -20,10 +20,10 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableWebSecurity
 public class SecurityConfig {
 
-	private static final String[] PUBLIC_PATHS = {
+	private static final String[] PERMIT_ALL_PATHS = {
 			"/api/auth/oauth2/**",
 			"/api/auth/google/**",
-			"/api/ai/**",
+			"/swagger-ui.html",
 			"/swagger-ui/**",
 			"/v3/api-docs/**"
 	};
@@ -54,7 +54,7 @@ public class SecurityConfig {
 				.exceptionHandling(exception -> exception
 						.authenticationEntryPoint(jwtAuthenticationEntryPoint))
 				.authorizeHttpRequests(auth -> auth
-						.requestMatchers(PUBLIC_PATHS).permitAll()
+						.requestMatchers(PERMIT_ALL_PATHS).permitAll()
 						.requestMatchers(HttpMethod.POST,
 								"/api/auth/signup",
 								"/api/auth/login",
