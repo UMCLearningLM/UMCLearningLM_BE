@@ -8,6 +8,8 @@ import com.umc.learninglm.domain.tutorial.dto.response.TutorialProgressSaveRespo
 import com.umc.learninglm.domain.tutorial.dto.response.TutorialProgressStartResponse;
 import com.umc.learninglm.domain.tutorial.dto.response.TutorialProgressUpdateResponse;
 import com.umc.learninglm.domain.tutorial.dto.response.TutorialStepsResponse;
+import com.umc.learninglm.domain.tutorial.service.TutorialProgressService;
+import com.umc.learninglm.domain.tutorial.service.TutorialService;
 import com.umc.learninglm.global.common.BaseResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -17,7 +19,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import java.util.List;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -32,7 +34,11 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "Tutorial", description = "공식 튜토리얼 API")
 @RestController
 @RequestMapping("/api/tutorials")
+@RequiredArgsConstructor
 public class TutorialController {
+
+	private final TutorialService tutorialService;
+	private final TutorialProgressService tutorialProgressService;
 
 	@GetMapping
 	@Operation(summary = "튜토리얼 목록 조회", description = "공식 튜토리얼 목록을 검색어·카테고리·난이도로 필터링하여 조회합니다.")
@@ -47,7 +53,7 @@ public class TutorialController {
 			@RequestParam(required = false) Long categoryId,
 			@Parameter(description = "난이도 코드 (BEGINNER / BASIC / ADVANCED)", example = "BEGINNER")
 			@RequestParam(required = false) String difficulty) {
-		return BaseResponse.success(new TutorialListResponse(0, List.of()));
+		return BaseResponse.success(tutorialService.getTutorials(q, categoryId, difficulty));
 	}
 
 	@GetMapping("/{tutorialId}")
@@ -60,9 +66,7 @@ public class TutorialController {
 	public BaseResponse<TutorialDetailResponse> getTutorialDetail(
 			@PathVariable Long tutorialId,
 			@RequestHeader(value = "Authorization", required = false) String authorization) {
-		return BaseResponse.success(new TutorialDetailResponse(
-				tutorialId, null, null, null, List.of(), 0, null,
-				List.of(), List.of(), null, List.of(), List.of(), null, false));
+		return BaseResponse.success(tutorialService.getTutorialDetail(tutorialId));
 	}
 
 	@GetMapping("/{tutorialId}/steps")
@@ -75,8 +79,7 @@ public class TutorialController {
 	public BaseResponse<TutorialStepsResponse> getTutorialSteps(
 			@PathVariable Long tutorialId,
 			@RequestHeader(value = "Authorization", required = false) String authorization) {
-		return BaseResponse.success(new TutorialStepsResponse(
-				tutorialId, null, 0, null, List.of()));
+		return BaseResponse.success(tutorialService.getTutorialSteps(tutorialId));
 	}
 
 	@PostMapping("/{tutorialId}/progress")
@@ -88,8 +91,7 @@ public class TutorialController {
 			@ApiResponse(responseCode = "401", description = "AUTH40103~AUTH40104: 인증 토큰 오류")
 	})
 	public BaseResponse<TutorialProgressSaveResponse> saveTutorial(@PathVariable Long tutorialId) {
-		return BaseResponse.success(new TutorialProgressSaveResponse(
-				tutorialId, 1, 5, 0, "NOT_STARTED", null));
+		return BaseResponse.success(tutorialProgressService.saveTutorial(tutorialId));
 	}
 
 	@PostMapping("/{tutorialId}/progress/start")
@@ -103,8 +105,7 @@ public class TutorialController {
 	public BaseResponse<TutorialProgressStartResponse> startTutorial(
 			@PathVariable Long tutorialId,
 			@Valid @RequestBody TutorialProgressStartRequest request) {
-		return BaseResponse.success(new TutorialProgressStartResponse(
-				tutorialId, 1, 5, 0, "IN_PROGRESS", request.flowId(), null));
+		return BaseResponse.success(tutorialProgressService.startTutorial(tutorialId, request.flowId()));
 	}
 
 	@PatchMapping("/{tutorialId}/progress")
@@ -118,8 +119,7 @@ public class TutorialController {
 	public BaseResponse<TutorialProgressUpdateResponse> updateProgress(
 			@PathVariable Long tutorialId,
 			@RequestBody TutorialProgressUpdateRequest request) {
-		return BaseResponse.success(new TutorialProgressUpdateResponse(
-				tutorialId, 4, 5, 60, "IN_PROGRESS", null));
+		return BaseResponse.success(tutorialProgressService.updateProgress(tutorialId, request.currentStepOrder(), request.status()));
 	}
 
 	@DeleteMapping("/{tutorialId}/progress")
@@ -130,6 +130,7 @@ public class TutorialController {
 			@ApiResponse(responseCode = "401", description = "AUTH40103~AUTH40104: 인증 토큰 오류")
 	})
 	public BaseResponse<Void> deleteProgress(@PathVariable Long tutorialId) {
+		tutorialProgressService.deleteProgress(tutorialId);
 		return BaseResponse.success(null);
 	}
 }

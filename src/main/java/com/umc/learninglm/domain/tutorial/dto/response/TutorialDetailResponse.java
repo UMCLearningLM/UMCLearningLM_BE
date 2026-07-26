@@ -14,7 +14,7 @@ public record TutorialDetailResponse(
 		@Schema(example = "15") Integer estimatedMinutes,
 		@Schema(description = "활용 사례 목록") List<TutorialUseCaseResponse> useCases,
 		@Schema(description = "필요 개념 목록") List<String> requiredConcepts,
-		@Schema(description = "실행 모드", example = "PRESET") String executionMode,
+		@Schema(description = "플로우 타입 (preset flow의 flow_type)", example = "PRESET", allowableValues = {"USER", "PRESET"}) String flowType,
 		@Schema(description = "블록 흐름 이름 목록 (순서대로)") List<String> blockFlow,
 		@Schema(description = "블록 상세 목록") List<TutorialBlockResponse> blocks,
 		@Schema(description = "예시 입력/결과") TutorialExampleResponse example,
