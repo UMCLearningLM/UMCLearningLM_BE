@@ -17,6 +17,7 @@ import com.umc.learninglm.domain.tutorial.repository.TutorialStepRepository;
 import com.umc.learninglm.global.error.CustomException;
 import com.umc.learninglm.global.error.ErrorCode;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -42,7 +43,13 @@ public class TutorialProgressService {
 		if (savedTutorialRepository.findByUserIdAndTutorial_TutorialId(userId, tutorialId).isPresent()) {
 			throw new CustomException(ErrorCode.TUTORIAL_ALREADY_SAVED);
 		}
-		SavedTutorial saved = savedTutorialRepository.saveAndFlush(SavedTutorial.createBookmark(userId, tutorial));
+		SavedTutorial saved;
+		try {
+			saved = savedTutorialRepository.saveAndFlush(SavedTutorial.createBookmark(userId, tutorial));
+		} catch (DataIntegrityViolationException e) {
+			// 위 조회 이후 동시 요청이 먼저 저장한 경우 — uq_saved_tutorial 위반
+			throw new CustomException(ErrorCode.TUTORIAL_ALREADY_SAVED);
+		}
 		int totalSteps = totalSteps(tutorialId);
 		return new TutorialProgressSaveResponse(
 				tutorialId,
@@ -97,6 +104,10 @@ public class TutorialProgressService {
 			throw new CustomException(ErrorCode.TUTORIAL_INVALID_STEP);
 		}
 		if (status != null && !STATUS_COMPLETED.equals(status)) {
+			throw new CustomException(ErrorCode.TUTORIAL_INVALID_STEP);
+		}
+		// 완료 처리는 마지막 단계에서만 허용
+		if (STATUS_COMPLETED.equals(status) && currentStepOrder != totalSteps) {
 			throw new CustomException(ErrorCode.TUTORIAL_INVALID_STEP);
 		}
 
