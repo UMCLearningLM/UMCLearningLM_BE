@@ -12,6 +12,11 @@ reviews:
   auto_review:
     enabled: true
     drafts: false
+    base_branches:
+      - "main"
+      - "master"
+      - "develop"
+      - "feature/*"
   path_filters:
     - "!**/*.lock"
     - "!**/build/**"
