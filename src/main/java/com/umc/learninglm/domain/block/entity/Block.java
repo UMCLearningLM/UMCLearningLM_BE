@@ -1,4 +1,4 @@
-package com.umc.learninglm.domain.block.entitiy;
+package com.umc.learninglm.domain.block.entity;
 
 import com.umc.learninglm.domain.block.enums.BlockStatus;
 import com.umc.learninglm.domain.block.enums.BlockType;

@@ -1,6 +1,6 @@
 package com.umc.learninglm.domain.flow.entitiy;
 
-import com.umc.learninglm.domain.block.entitiy.Block;
+import com.umc.learninglm.domain.block.entity.Block;
 import com.umc.learninglm.domain.block.enums.ExecutionMode;
 import com.umc.learninglm.global.common.BaseTimeEntity;
 import jakarta.persistence.Column;
