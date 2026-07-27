@@ -16,7 +16,8 @@ public enum ErrorCode {
 	TUTORIAL_NOT_FOUND(HttpStatus.NOT_FOUND, "TUTORIAL40401", "존재하지 않는 튜토리얼입니다."),
 	TUTORIAL_PROGRESS_NOT_FOUND(HttpStatus.NOT_FOUND, "TUTORIAL40402", "저장(진행) 정보가 없습니다."),
 	TUTORIAL_STEPS_NOT_FOUND(HttpStatus.NOT_FOUND, "TUTORIAL40403", "튜토리얼 단계 정보가 없습니다."),
-	TUTORIAL_ALREADY_SAVED(HttpStatus.CONFLICT, "TUTORIAL40901", "이미 저장된 튜토리얼입니다.");
+	TUTORIAL_ALREADY_SAVED(HttpStatus.CONFLICT, "TUTORIAL40901", "이미 저장된 튜토리얼입니다."),
+	TUTORIAL_ALREADY_STARTED(HttpStatus.CONFLICT, "TUTORIAL40902", "이미 다른 flow로 진행 중인 튜토리얼입니다.");
 
 	private final HttpStatus httpStatus;
 	private final String code;

@@ -71,11 +71,6 @@ public class SavedTutorial extends BaseTimeEntity {
 		this.status = SavedTutorialStatus.IN_PROGRESS;
 	}
 
-	// 진행 중 재호출 — 단계·상태는 그대로 두고 flow만 갱신
-	public void updateFlow(Long flowId) {
-		this.flowId = flowId;
-	}
-
 	// 진행 단계 갱신
 	public void updateStep(int currentStepOrder) {
 		this.currentStepOrder = currentStepOrder;

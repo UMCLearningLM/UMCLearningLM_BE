@@ -61,7 +61,8 @@ public class TutorialProgressService {
 	}
 
 	// 시작: IN_PROGRESS 전환 + flow 연결. 저장 이력 없으면 생성(upsert).
-	// 진행 중(IN_PROGRESS) 재호출은 단계를 보존하고 flow만 갱신(멱등), 완료(COMPLETED) 재호출은 1단계부터 재시작.
+	// 진행도는 특정 flow에서 단계별 필수 블록을 채운 정도라, 같은 flow 재호출일 때만 진행 상태를 보존(멱등).
+	// 진행 중인데 다른 flow로 호출하면 진행 기록이 소실되므로 거부(TUTORIAL40902). 저장 해제 후 재시작해야 함.
 	@Transactional
 	public TutorialProgressStartResponse startTutorial(Long tutorialId, Long flowId) {
 		Long userId = currentUserId();
@@ -75,7 +76,10 @@ public class TutorialProgressService {
 		SavedTutorial saved = savedTutorialRepository.findByUserIdAndTutorial_TutorialId(userId, tutorialId)
 				.orElseGet(() -> SavedTutorial.createBookmark(userId, tutorial));
 		if (saved.getStatus() == SavedTutorialStatus.IN_PROGRESS) {
-			saved.updateFlow(flowId);
+			if (!flowId.equals(saved.getFlowId())) {
+				throw new CustomException(ErrorCode.TUTORIAL_ALREADY_STARTED);
+			}
+			// 같은 flow 재호출 — 진행 상태 그대로 유지(멱등)
 		} else {
 			saved.start(flowId);
 		}

@@ -100,6 +100,7 @@ public class TutorialController {
 			@ApiResponse(responseCode = "200", description = "튜토리얼 시작 성공"),
 			@ApiResponse(responseCode = "400", description = "TUTORIAL40004: 해당 튜토리얼의 flow가 아님"),
 			@ApiResponse(responseCode = "404", description = "TUTORIAL40401: 존재하지 않는 튜토리얼"),
+			@ApiResponse(responseCode = "409", description = "TUTORIAL40902: 이미 다른 flow로 진행 중"),
 			@ApiResponse(responseCode = "401", description = "AUTH40103~AUTH40104: 인증 토큰 오류")
 	})
 	public BaseResponse<TutorialProgressStartResponse> startTutorial(
