@@ -64,11 +64,16 @@ public class SavedTutorial extends BaseTimeEntity {
 		return new SavedTutorial(userId, tutorial);
 	}
 
-	// 학습 시작 — IN_PROGRESS 전환 + flow 연결
+	// 학습 시작 — IN_PROGRESS 전환 + flow 연결. 1단계부터 시작.
 	public void start(Long flowId) {
 		this.flowId = flowId;
 		this.currentStepOrder = 1;
 		this.status = SavedTutorialStatus.IN_PROGRESS;
+	}
+
+	// 진행 중 재호출 — 단계·상태는 그대로 두고 flow만 갱신
+	public void updateFlow(Long flowId) {
+		this.flowId = flowId;
 	}
 
 	// 진행 단계 갱신

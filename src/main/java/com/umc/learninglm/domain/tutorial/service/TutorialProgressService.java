@@ -61,6 +61,7 @@ public class TutorialProgressService {
 	}
 
 	// 시작: IN_PROGRESS 전환 + flow 연결. 저장 이력 없으면 생성(upsert).
+	// 진행 중(IN_PROGRESS) 재호출은 단계를 보존하고 flow만 갱신(멱등), 완료(COMPLETED) 재호출은 1단계부터 재시작.
 	@Transactional
 	public TutorialProgressStartResponse startTutorial(Long tutorialId, Long flowId) {
 		Long userId = currentUserId();
@@ -73,7 +74,11 @@ public class TutorialProgressService {
 
 		SavedTutorial saved = savedTutorialRepository.findByUserIdAndTutorial_TutorialId(userId, tutorialId)
 				.orElseGet(() -> SavedTutorial.createBookmark(userId, tutorial));
-		saved.start(flowId);
+		if (saved.getStatus() == SavedTutorialStatus.IN_PROGRESS) {
+			saved.updateFlow(flowId);
+		} else {
+			saved.start(flowId);
+		}
 		saved = savedTutorialRepository.saveAndFlush(saved);
 
 		int totalSteps = totalSteps(tutorialId);
