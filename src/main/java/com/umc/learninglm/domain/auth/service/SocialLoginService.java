@@ -17,6 +17,9 @@ import org.springframework.dao.DataIntegrityViolationException;
 @Service
 public class SocialLoginService {
 
+	private static final String DEFAULT_NICKNAME = "user";
+	private static final String INVALID_NICKNAME_CHARACTER_PATTERN = "[^가-힣A-Za-z0-9]";
+	private static final int MIN_NICKNAME_LENGTH = 2;
 	private static final int MAX_NICKNAME_LENGTH = 50;
 
 	private final UserRepository userRepository;
@@ -51,6 +54,9 @@ public class SocialLoginService {
 			String providerId,
 			String email,
 			String nickname) {
+		if (email == null || email.isBlank()) {
+			throw new CustomException(ErrorCode.SOCIAL_ACCOUNT_PROCESSING_FAILED);
+		}
 		if (userRepository.existsByEmail(email)) {
 			throw new CustomException(ErrorCode.EMAIL_ALREADY_EXISTS);
 		}
@@ -68,8 +74,16 @@ public class SocialLoginService {
 	private String normalizeNickname(String nickname, String email) {
 		String normalizedNickname = nickname;
 		if (normalizedNickname == null || normalizedNickname.isBlank()) {
-			int atIndex = email.indexOf('@');
+			int atIndex = email == null ? -1 : email.indexOf('@');
 			normalizedNickname = atIndex > 0 ? email.substring(0, atIndex) : email;
+		}
+		normalizedNickname = normalizedNickname == null
+				? DEFAULT_NICKNAME
+				: normalizedNickname.replaceAll(INVALID_NICKNAME_CHARACTER_PATTERN, "");
+		if (normalizedNickname.isBlank()) {
+			normalizedNickname = DEFAULT_NICKNAME;
+		} else if (normalizedNickname.length() < MIN_NICKNAME_LENGTH) {
+			normalizedNickname = DEFAULT_NICKNAME + normalizedNickname;
 		}
 		return normalizedNickname.length() > MAX_NICKNAME_LENGTH
 				? normalizedNickname.substring(0, MAX_NICKNAME_LENGTH)

@@ -11,6 +11,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
@@ -24,6 +25,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 
 @Component
+@Slf4j
 public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
 	private final SocialLoginService socialLoginService;
@@ -60,9 +62,11 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 			invalidateSession(request);
 			writeSuccess(response, tokenResponse);
 		} catch (CustomException e) {
+			log.warn("Social login failed: {}", e.getErrorCode(), e);
 			invalidateSession(request);
 			oAuth2FailureHandler.writeFailure(response, e.getErrorCode());
 		} catch (RuntimeException e) {
+			log.error("Unexpected error during OAuth2 login success handling", e);
 			invalidateSession(request);
 			oAuth2FailureHandler.writeFailure(response, ErrorCode.SOCIAL_ACCOUNT_PROCESSING_FAILED);
 		}

@@ -239,6 +239,7 @@ public class AuthService {
 				request.purpose(),
 				expiresAt));
 
+		// TODO: 운영 환경에서는 SMTP 연동 후 인증코드를 응답으로 직접 반환하는 임시 방식을 제거한다.
 		return new EmailVerificationResponse(
 				request.verificationType(),
 				request.purpose(),

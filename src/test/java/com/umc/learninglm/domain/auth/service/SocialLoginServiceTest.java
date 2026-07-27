@@ -95,7 +95,34 @@ class SocialLoginServiceTest {
 		AuthTokenResponse response = socialLoginService.login(
 				UserProvider.GOOGLE, "google-sub-123", "google-user@example.com", null);
 
-		assertThat(response.nickname()).isEqualTo("google-user");
+		assertThat(response.nickname()).isEqualTo("googleuser");
+	}
+
+	@Test
+	void loginSanitizesSocialNickname() {
+		when(userRepository.findByProviderAndProviderId(UserProvider.GOOGLE, "google-sub-123"))
+				.thenReturn(Optional.empty());
+		when(userRepository.existsByEmail("google@example.com")).thenReturn(false);
+		when(userRepository.saveAndFlush(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+		stubTokenIssuance();
+
+		AuthTokenResponse response = socialLoginService.login(
+				UserProvider.GOOGLE, "google-sub-123", "google@example.com", "Google User");
+
+		assertThat(response.nickname()).isEqualTo("GoogleUser");
+	}
+
+	@Test
+	void loginRejectsMissingEmailBeforePersistence() {
+		when(userRepository.findByProviderAndProviderId(UserProvider.GOOGLE, "google-sub-123"))
+				.thenReturn(Optional.empty());
+
+		assertThatThrownBy(() -> socialLoginService.login(
+				UserProvider.GOOGLE, "google-sub-123", null, null))
+				.isInstanceOf(CustomException.class)
+				.extracting(exception -> ((CustomException) exception).getErrorCode())
+				.isEqualTo(ErrorCode.SOCIAL_ACCOUNT_PROCESSING_FAILED);
+		verify(userRepository, never()).saveAndFlush(any(User.class));
 	}
 
 	@Test

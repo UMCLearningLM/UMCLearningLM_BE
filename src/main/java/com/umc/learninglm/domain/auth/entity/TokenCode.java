@@ -12,6 +12,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
@@ -25,7 +26,12 @@ import java.time.LocalDateTime;
 
 @Getter
 @Entity
-@Table(name = "token_code")
+@Table(name = "token_code", indexes = {
+		@Index(name = "idx_token_code_token_hash", columnList = "token_hash"),
+		@Index(
+				name = "idx_token_code_email_type_purpose_status",
+				columnList = "email, type, purpose, status")
+})
 @EntityListeners(AuditingEntityListener.class)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class TokenCode {
