@@ -1,5 +1,6 @@
 package com.umc.learninglm.domain.tutorial.entity;
 
+import com.umc.learninglm.domain.category.entity.Category;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -33,7 +34,7 @@ public class TutorialCategory {
 	@JoinColumn(name = "tutorial_id", nullable = false)
 	private Tutorial tutorial;
 
-	// categories 참조 (category 도메인 → Long FK)
-	@Column(name = "category_id", nullable = false)
-	private Long categoryId;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "category_id", nullable = false)
+	private Category category;
 }

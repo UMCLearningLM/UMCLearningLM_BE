@@ -1,9 +1,9 @@
-package com.umc.learninglm.domain.flow.entitiy;
+package com.umc.learninglm.domain.flow.entity;
 
 import com.umc.learninglm.domain.auth.entity.User;
+import com.umc.learninglm.global.common.BaseTimeEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EntityListeners;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -14,22 +14,17 @@ import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-
-import java.time.LocalDateTime;
 
 @Getter
 @Entity
-@Table(name = "flow_likes")
-@EntityListeners(AuditingEntityListener.class)
+@Table(name = "saved_flows")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class FlowLike {
+public class SavedFlow extends BaseTimeEntity {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	@Column(name = "flow_like_id", nullable = false)
-	private Long flowLikeId;
+	@Column(name = "saved_flow_id", nullable = false)
+	private Long savedFlowId;
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "user_id", nullable = false)
@@ -38,8 +33,4 @@ public class FlowLike {
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "flow_id", nullable = false)
 	private Flow flow;
-
-	@CreatedDate
-	@Column(name = "created_at", nullable = false, updatable = false)
-	private LocalDateTime createdAt;
 }

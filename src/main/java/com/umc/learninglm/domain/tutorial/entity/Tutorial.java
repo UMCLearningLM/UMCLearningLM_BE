@@ -1,5 +1,6 @@
 package com.umc.learninglm.domain.tutorial.entity;
 
+import com.umc.learninglm.domain.flow.entity.Flow;
 import com.umc.learninglm.domain.tutorial.enums.Difficulty;
 import com.umc.learninglm.domain.tutorial.enums.TutorialStatus;
 import com.umc.learninglm.global.common.BaseTimeEntity;
@@ -7,9 +8,12 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -32,9 +36,10 @@ public class Tutorial extends BaseTimeEntity {
 	@Column(name = "title", nullable = false, length = 200)
 	private String title;
 
-	// 예시 입력·결과 보여주기용 flow (flow 도메인 → Long FK)
-	@Column(name = "preset_flow_id")
-	private Long presetFlowId;
+	// 예시 입력·결과 보여주기용 flow
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "preset_flow_id")
+	private Flow presetFlow;
 
 	@Column(name = "summary", columnDefinition = "TEXT")
 	private String summary;

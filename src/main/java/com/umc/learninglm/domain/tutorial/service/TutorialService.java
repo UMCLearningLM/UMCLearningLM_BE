@@ -3,9 +3,10 @@ package com.umc.learninglm.domain.tutorial.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.umc.learninglm.domain.block.entity.Block;
 import com.umc.learninglm.domain.category.entity.Category;
 import com.umc.learninglm.domain.category.enums.CategoryCode;
-import com.umc.learninglm.domain.category.repository.CategoryRepository;
+import com.umc.learninglm.domain.flow.entity.Flow;
 import com.umc.learninglm.domain.tutorial.dto.response.TutorialBlockResponse;
 import com.umc.learninglm.domain.tutorial.dto.response.TutorialCategoryResponse;
 import com.umc.learninglm.domain.tutorial.dto.response.TutorialDetailResponse;
@@ -22,10 +23,6 @@ import com.umc.learninglm.domain.tutorial.entity.TutorialCategory;
 import com.umc.learninglm.domain.tutorial.entity.TutorialStep;
 import com.umc.learninglm.domain.tutorial.enums.Difficulty;
 import com.umc.learninglm.domain.tutorial.enums.TutorialStatus;
-import com.umc.learninglm.domain.tutorial.repository.BlockReadRepository;
-import com.umc.learninglm.domain.tutorial.repository.BlockView;
-import com.umc.learninglm.domain.tutorial.repository.FlowReadRepository;
-import com.umc.learninglm.domain.tutorial.repository.FlowView;
 import com.umc.learninglm.domain.tutorial.repository.TutorialBlockRepository;
 import com.umc.learninglm.domain.tutorial.repository.TutorialCategoryRepository;
 import com.umc.learninglm.domain.tutorial.repository.TutorialRepository;
@@ -36,7 +33,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -47,11 +43,8 @@ public class TutorialService {
 
 	private final TutorialRepository tutorialRepository;
 	private final TutorialCategoryRepository tutorialCategoryRepository;
-	private final CategoryRepository categoryRepository;
 	private final TutorialStepRepository tutorialStepRepository;
 	private final TutorialBlockRepository tutorialBlockRepository;
-	private final BlockReadRepository blockReadRepository;
-	private final FlowReadRepository flowReadRepository;
 	private final ObjectMapper objectMapper;
 
 	// 목록: status=PUBLISHED만, q(title·summary 부분일치)·categoryId·difficulty 필터, createdAt DESC.
@@ -76,16 +69,14 @@ public class TutorialService {
 	public TutorialDetailResponse getTutorialDetail(Long tutorialId) {
 		Tutorial tutorial = findPublishedOrThrow(tutorialId);
 
-		List<TutorialBlock> orderedBlocks = orderedTutorialBlocks(tutorialId);
-		Map<Long, BlockView> blocks = loadBlockMap(orderedBlocks);
-		List<TutorialBlockResponse> blockResponses = orderedBlocks.stream()
+		List<TutorialBlockResponse> blockResponses = orderedTutorialBlocks(tutorialId).stream()
 				.map(tutorialBlock -> {
-					BlockView block = blocks.get(tutorialBlock.getBlockId());
+					Block block = tutorialBlock.getBlock();
 					return new TutorialBlockResponse(
-							tutorialBlock.getBlockId(),
-							block == null ? null : block.name(),
-							block == null ? null : block.blockType(),
-							block == null ? null : block.description(),
+							block.getBlockId(),
+							block.getName(),
+							block.getBlockType().name(),
+							block.getDescription(),
 							tutorialBlock.getReason());
 				})
 				.toList();
@@ -93,13 +84,11 @@ public class TutorialService {
 
 		String flowType = null;
 		TutorialExampleResponse example = null;
-		if (tutorial.getPresetFlowId() != null) {
-			FlowView presetFlow = flowReadRepository.findByFlowId(tutorial.getPresetFlowId()).orElse(null);
-			if (presetFlow != null) {
-				flowType = presetFlow.flowType();
-				// source: 우선 TEMPLATE 고정. 정확한 출처 확인 필요.
-				example = new TutorialExampleResponse(presetFlow.exampleInput(), presetFlow.exampleResult(), "TEMPLATE");
-			}
+		Flow presetFlow = tutorial.getPresetFlow();
+		if (presetFlow != null) {
+			flowType = presetFlow.getFlowType().name();
+			// source: 우선 TEMPLATE 고정. 정확한 출처 확인 필요.
+			example = new TutorialExampleResponse(presetFlow.getExampleInput(), presetFlow.getExampleResult(), "TEMPLATE");
 		}
 
 		return new TutorialDetailResponse(
@@ -145,16 +134,15 @@ public class TutorialService {
 	}
 
 	private TutorialStepResponse toStepResponse(TutorialStep step) {
-		List<TutorialBlock> tutorialBlocks = tutorialBlockRepository.findByTutorialStep_TutorialStepIdOrderByBlockOrderAsc(step.getTutorialStepId());
-		Map<Long, BlockView> blocks = loadBlockMap(tutorialBlocks);
-		List<TutorialStepBlockResponse> blockResponses = tutorialBlocks.stream()
+		List<TutorialStepBlockResponse> blockResponses =
+				tutorialBlockRepository.findByTutorialStep_TutorialStepIdOrderByBlockOrderAsc(step.getTutorialStepId()).stream()
 				.map(tutorialBlock -> {
-					BlockView block = blocks.get(tutorialBlock.getBlockId());
+					Block block = tutorialBlock.getBlock();
 					return new TutorialStepBlockResponse(
 							tutorialBlock.getTutorialBlockId(),
-							tutorialBlock.getBlockId(),
-							block == null ? null : block.name(),
-							block == null ? null : block.blockType(),
+							block.getBlockId(),
+							block.getName(),
+							block.getBlockType().name(),
 							tutorialBlock.getBlockOrder(),
 							tutorialBlock.getRequired(),
 							parseMap(tutorialBlock.getDefaultOptions()));
@@ -186,7 +174,7 @@ public class TutorialService {
 
 	private boolean hasCategory(Long tutorialId, Long categoryId) {
 		return tutorialCategoryRepository.findByTutorial_TutorialId(tutorialId).stream()
-				.anyMatch(tutorialCategory -> tutorialCategory.getCategoryId().equals(categoryId));
+				.anyMatch(tutorialCategory -> tutorialCategory.getCategory().getCategoryId().equals(categoryId));
 	}
 
 	private TutorialSummaryResponse toSummary(Tutorial tutorial) {
@@ -204,10 +192,8 @@ public class TutorialService {
 	}
 
 	private List<TutorialCategoryResponse> loadCategories(Long tutorialId) {
-		List<Long> categoryIds = tutorialCategoryRepository.findByTutorial_TutorialId(tutorialId).stream()
-				.map(TutorialCategory::getCategoryId)
-				.toList();
-		return categoryRepository.findAllById(categoryIds).stream()
+		return tutorialCategoryRepository.findByTutorial_TutorialId(tutorialId).stream()
+				.map(TutorialCategory::getCategory)
 				.map(this::toCategoryResponse)
 				.toList();
 	}
@@ -241,13 +227,6 @@ public class TutorialService {
 			result.addAll(tutorialBlockRepository.findByTutorialStep_TutorialStepIdOrderByBlockOrderAsc(step.getTutorialStepId()));
 		}
 		return result;
-	}
-
-	// blocks 도메인 테이블에서 필요한 컬럼만 읽어 blockId → BlockView 맵 구성
-	private Map<Long, BlockView> loadBlockMap(List<TutorialBlock> tutorialBlocks) {
-		List<Long> blockIds = tutorialBlocks.stream().map(TutorialBlock::getBlockId).toList();
-		return blockReadRepository.findAllByBlockIds(blockIds).stream()
-				.collect(Collectors.toMap(BlockView::blockId, block -> block));
 	}
 
 	private List<TutorialUseCaseResponse> parseUseCases(String json) {

@@ -1,4 +1,4 @@
-package com.umc.learninglm.domain.flow.entitiy;
+package com.umc.learninglm.domain.flow.entity;
 
 import com.umc.learninglm.domain.auth.entity.User;
 import jakarta.persistence.Column;

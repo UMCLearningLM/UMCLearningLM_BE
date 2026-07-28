@@ -10,13 +10,17 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Getter
 @Entity
-@Table(name = "tutorial_steps")
+@Table(
+		name = "tutorial_steps",
+		uniqueConstraints = @UniqueConstraint(name = "uq_tutorial_step_order", columnNames = {"tutorial_id", "step_order"})
+)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class TutorialStep extends BaseTimeEntity {
 

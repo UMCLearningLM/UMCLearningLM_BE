@@ -1,12 +1,9 @@
-package com.umc.learninglm.domain.flow.entitiy;
+package com.umc.learninglm.domain.flow.entity;
 
 import com.umc.learninglm.domain.auth.entity.User;
-import com.umc.learninglm.domain.flow.enums.FlowCommentStatus;
-import com.umc.learninglm.global.common.BaseTimeEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
+import jakarta.persistence.EntityListeners;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -17,18 +14,22 @@ import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.ColumnDefault;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
+import java.time.LocalDateTime;
 
 @Getter
 @Entity
-@Table(name = "flow_comments")
+@Table(name = "flow_likes")
+@EntityListeners(AuditingEntityListener.class)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class FlowComment extends BaseTimeEntity {
+public class FlowLike {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	@Column(name = "flow_comment_id", nullable = false)
-	private Long flowCommentId;
+	@Column(name = "flow_like_id", nullable = false)
+	private Long flowLikeId;
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "user_id", nullable = false)
@@ -38,11 +39,7 @@ public class FlowComment extends BaseTimeEntity {
 	@JoinColumn(name = "flow_id", nullable = false)
 	private Flow flow;
 
-	@Column(name = "content", nullable = false, columnDefinition = "TEXT")
-	private String content;
-
-	@Enumerated(EnumType.STRING)
-	@Column(name = "status", nullable = false, length = 30)
-	@ColumnDefault("'ACTIVE'")
-	private FlowCommentStatus status = FlowCommentStatus.ACTIVE;
+	@CreatedDate
+	@Column(name = "created_at", nullable = false, updatable = false)
+	private LocalDateTime createdAt;
 }
