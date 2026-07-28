@@ -7,8 +7,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface SavedTutorialRepository extends JpaRepository<SavedTutorial, Long> {
 
-	// (user_id, tutorial_id) UNIQUE 전제 — 사용자당 튜토리얼당 진행 1행
-	Optional<SavedTutorial> findByUserIdAndTutorial_TutorialId(Long userId, Long tutorialId);
+	// uq_saved_tutorial (user_id, tutorial_id) 전제 — 사용자당 튜토리얼당 진행 1행
+	Optional<SavedTutorial> findByUser_UserIdAndTutorial_TutorialId(Long userId, Long tutorialId);
 
-	List<SavedTutorial> findByUserId(Long userId);
+	List<SavedTutorial> findByUser_UserId(Long userId);
 }

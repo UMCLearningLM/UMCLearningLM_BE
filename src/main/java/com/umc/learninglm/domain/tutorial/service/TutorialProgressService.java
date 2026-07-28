@@ -2,6 +2,8 @@ package com.umc.learninglm.domain.tutorial.service;
 
 import com.umc.learninglm.domain.auth.entity.User;
 import com.umc.learninglm.domain.auth.repository.UserRepository;
+import com.umc.learninglm.domain.flow.entitiy.Flow;
+import com.umc.learninglm.domain.flow.repository.FlowRepository;
 import com.umc.learninglm.domain.tutorial.dto.response.TutorialProgressSaveResponse;
 import com.umc.learninglm.domain.tutorial.dto.response.TutorialProgressStartResponse;
 import com.umc.learninglm.domain.tutorial.dto.response.TutorialProgressUpdateResponse;
@@ -9,8 +11,6 @@ import com.umc.learninglm.domain.tutorial.entity.SavedTutorial;
 import com.umc.learninglm.domain.tutorial.entity.Tutorial;
 import com.umc.learninglm.domain.tutorial.enums.SavedTutorialStatus;
 import com.umc.learninglm.domain.tutorial.enums.TutorialStatus;
-import com.umc.learninglm.domain.tutorial.repository.FlowReadRepository;
-import com.umc.learninglm.domain.tutorial.repository.FlowView;
 import com.umc.learninglm.domain.tutorial.repository.SavedTutorialRepository;
 import com.umc.learninglm.domain.tutorial.repository.TutorialRepository;
 import com.umc.learninglm.domain.tutorial.repository.TutorialStepRepository;
@@ -32,20 +32,20 @@ public class TutorialProgressService {
 	private final SavedTutorialRepository savedTutorialRepository;
 	private final TutorialRepository tutorialRepository;
 	private final TutorialStepRepository tutorialStepRepository;
-	private final FlowReadRepository flowReadRepository;
+	private final FlowRepository flowRepository;
 	private final UserRepository userRepository;
 
 	// 저장(북마크): saved_tutorials NOT_STARTED 생성
 	@Transactional
 	public TutorialProgressSaveResponse saveTutorial(Long tutorialId) {
-		Long userId = currentUserId();
+		User user = currentUser();
 		Tutorial tutorial = requirePublishedTutorial(tutorialId);
-		if (savedTutorialRepository.findByUserIdAndTutorial_TutorialId(userId, tutorialId).isPresent()) {
+		if (savedTutorialRepository.findByUser_UserIdAndTutorial_TutorialId(user.getUserId(), tutorialId).isPresent()) {
 			throw new CustomException(ErrorCode.TUTORIAL_ALREADY_SAVED);
 		}
 		SavedTutorial saved;
 		try {
-			saved = savedTutorialRepository.saveAndFlush(SavedTutorial.createBookmark(userId, tutorial));
+			saved = savedTutorialRepository.saveAndFlush(SavedTutorial.createBookmark(user, tutorial));
 		} catch (DataIntegrityViolationException e) {
 			// 위 조회 이후 동시 요청이 먼저 저장한 경우 — uq_saved_tutorial 위반
 			throw new CustomException(ErrorCode.TUTORIAL_ALREADY_SAVED);
@@ -65,23 +65,25 @@ public class TutorialProgressService {
 	// 진행 중인데 다른 flow로 호출하면 진행 기록이 소실되므로 거부(TUTORIAL40902). 저장 해제 후 재시작해야 함.
 	@Transactional
 	public TutorialProgressStartResponse startTutorial(Long tutorialId, Long flowId) {
-		Long userId = currentUserId();
+		User user = currentUser();
 		Tutorial tutorial = requirePublishedTutorial(tutorialId);
 
-		FlowView flow = flowReadRepository.findByFlowId(flowId).orElse(null);
-		if (flow == null || !tutorialId.equals(flow.tutorialId())) {
+		Flow flow = flowRepository.findById(flowId).orElse(null);
+		if (flow == null || flow.getTutorial() == null
+				|| !tutorialId.equals(flow.getTutorial().getTutorialId())) {
 			throw new CustomException(ErrorCode.TUTORIAL_FLOW_MISMATCH);
 		}
 
-		SavedTutorial saved = savedTutorialRepository.findByUserIdAndTutorial_TutorialId(userId, tutorialId)
-				.orElseGet(() -> SavedTutorial.createBookmark(userId, tutorial));
+		SavedTutorial saved = savedTutorialRepository.findByUser_UserIdAndTutorial_TutorialId(user.getUserId(), tutorialId)
+				.orElseGet(() -> SavedTutorial.createBookmark(user, tutorial));
 		if (saved.getStatus() == SavedTutorialStatus.IN_PROGRESS) {
-			if (!flowId.equals(saved.getFlowId())) {
+			Flow currentFlow = saved.getFlow();
+			if (currentFlow == null || !flowId.equals(currentFlow.getFlowId())) {
 				throw new CustomException(ErrorCode.TUTORIAL_ALREADY_STARTED);
 			}
 			// 같은 flow 재호출 — 진행 상태 그대로 유지(멱등)
 		} else {
-			saved.start(flowId);
+			saved.start(flow);
 		}
 		saved = savedTutorialRepository.saveAndFlush(saved);
 
@@ -92,17 +94,17 @@ public class TutorialProgressService {
 				totalSteps,
 				progressRate(saved.getStatus(), saved.getCurrentStepOrder(), totalSteps),
 				saved.getStatus().name(),
-				saved.getFlowId(),
+				saved.getFlow().getFlowId(),
 				saved.getUpdatedAt());
 	}
 
 	// 갱신(이어하기): 현재 단계 값 갱신. status=COMPLETED 전송 시 완료 처리.
 	@Transactional
 	public TutorialProgressUpdateResponse updateProgress(Long tutorialId, Integer currentStepOrder, String status) {
-		Long userId = currentUserId();
+		User user = currentUser();
 		requirePublishedTutorial(tutorialId);
 
-		SavedTutorial saved = savedTutorialRepository.findByUserIdAndTutorial_TutorialId(userId, tutorialId)
+		SavedTutorial saved = savedTutorialRepository.findByUser_UserIdAndTutorial_TutorialId(user.getUserId(), tutorialId)
 				.orElseThrow(() -> new CustomException(ErrorCode.TUTORIAL_PROGRESS_NOT_FOUND));
 		if (saved.getStatus() == SavedTutorialStatus.NOT_STARTED) {
 			throw new CustomException(ErrorCode.TUTORIAL_NOT_STARTED);
@@ -139,9 +141,9 @@ public class TutorialProgressService {
 	// 저장 해제(하드 삭제)
 	@Transactional
 	public void deleteProgress(Long tutorialId) {
-		Long userId = currentUserId();
+		User user = currentUser();
 		requirePublishedTutorial(tutorialId);
-		SavedTutorial saved = savedTutorialRepository.findByUserIdAndTutorial_TutorialId(userId, tutorialId)
+		SavedTutorial saved = savedTutorialRepository.findByUser_UserIdAndTutorial_TutorialId(user.getUserId(), tutorialId)
 				.orElseThrow(() -> new CustomException(ErrorCode.TUTORIAL_PROGRESS_NOT_FOUND));
 		savedTutorialRepository.delete(saved);
 	}
@@ -170,8 +172,8 @@ public class TutorialProgressService {
 		return (int) Math.round((currentStepOrder - 1) * 100.0 / totalSteps);
 	}
 
-	// JWT 필터가 principal에 email을 넣음(auth 도메인 컨벤션) → email로 userId 조회.
-	private Long currentUserId() {
+	// JWT 필터가 principal에 email을 넣음(auth 도메인 컨벤션) → email로 사용자 조회.
+	private User currentUser() {
 		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 		if (authentication == null || !authentication.isAuthenticated()) {
 			// 이 엔드포인트들은 SecurityConfig에서 authenticated()로 보호됨. 방어적 처리.
@@ -179,7 +181,6 @@ public class TutorialProgressService {
 		}
 		String email = authentication.getName();
 		return userRepository.findByEmail(email)
-				.map(User::getUserId)
 				// TODO: auth 병합 후 AUTH40401(사용자 없음)로 교체
 				.orElseThrow(() -> new CustomException(ErrorCode.INTERNAL_SERVER_ERROR));
 	}
