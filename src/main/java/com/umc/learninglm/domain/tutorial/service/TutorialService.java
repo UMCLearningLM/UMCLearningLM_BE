@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.umc.learninglm.domain.block.entity.Block;
 import com.umc.learninglm.domain.category.entity.Category;
 import com.umc.learninglm.domain.category.enums.CategoryCode;
-import com.umc.learninglm.domain.flow.entitiy.Flow;
+import com.umc.learninglm.domain.flow.entity.Flow;
 import com.umc.learninglm.domain.tutorial.dto.response.TutorialBlockResponse;
 import com.umc.learninglm.domain.tutorial.dto.response.TutorialCategoryResponse;
 import com.umc.learninglm.domain.tutorial.dto.response.TutorialDetailResponse;

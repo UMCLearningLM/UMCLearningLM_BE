@@ -1,7 +1,7 @@
 package com.umc.learninglm.domain.tutorial.entity;
 
 import com.umc.learninglm.domain.auth.entity.User;
-import com.umc.learninglm.domain.flow.entitiy.Flow;
+import com.umc.learninglm.domain.flow.entity.Flow;
 import com.umc.learninglm.domain.tutorial.enums.SavedTutorialStatus;
 import com.umc.learninglm.global.common.BaseTimeEntity;
 import jakarta.persistence.Column;

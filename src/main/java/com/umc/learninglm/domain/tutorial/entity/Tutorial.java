@@ -1,6 +1,6 @@
 package com.umc.learninglm.domain.tutorial.entity;
 
-import com.umc.learninglm.domain.flow.entitiy.Flow;
+import com.umc.learninglm.domain.flow.entity.Flow;
 import com.umc.learninglm.domain.tutorial.enums.Difficulty;
 import com.umc.learninglm.domain.tutorial.enums.TutorialStatus;
 import com.umc.learninglm.global.common.BaseTimeEntity;

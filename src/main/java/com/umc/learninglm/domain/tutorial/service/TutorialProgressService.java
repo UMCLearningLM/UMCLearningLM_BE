@@ -2,7 +2,7 @@ package com.umc.learninglm.domain.tutorial.service;
 
 import com.umc.learninglm.domain.auth.entity.User;
 import com.umc.learninglm.domain.auth.repository.UserRepository;
-import com.umc.learninglm.domain.flow.entitiy.Flow;
+import com.umc.learninglm.domain.flow.entity.Flow;
 import com.umc.learninglm.domain.flow.repository.FlowRepository;
 import com.umc.learninglm.domain.tutorial.dto.response.TutorialProgressSaveResponse;
 import com.umc.learninglm.domain.tutorial.dto.response.TutorialProgressStartResponse;
