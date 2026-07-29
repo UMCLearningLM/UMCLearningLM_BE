@@ -7,7 +7,7 @@ public record AuthTokenResponse(
 		@Schema(example = "1") Long userId,
 		@Schema(example = "user@example.com") String email,
 		@Schema(example = "홍길동") String nickname,
-		@Schema(example = "access-token") String accessToken,
-		@Schema(example = "refresh-token") String refreshToken
+		@Schema(example = "eyJhbGciOiJIUzM4NCJ9.access.signature") String accessToken,
+		@Schema(example = "eyJhbGciOiJIUzM4NCJ9.refresh.signature") String refreshToken
 ) {
 }
