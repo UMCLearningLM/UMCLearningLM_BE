@@ -12,6 +12,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockFilterChain;
@@ -20,6 +22,7 @@ import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -95,6 +98,24 @@ class JwtAuthenticationFilterTest {
 		assertThat(response.getStatus()).isEqualTo(401);
 		assertThat(responseBody.path("code").asText()).isEqualTo("AUTH40105");
 		assertThat(filterChain.getRequest()).isNull();
+	}
+
+	@ParameterizedTest
+	@ValueSource(strings = {
+			"/api/auth/login",
+			"/api/auth/reissue"
+	})
+	void skipsAccessTokenValidationOnAccessTokenFreePaths(String requestUri) throws Exception {
+		MockHttpServletRequest request = bearerRequest();
+		request.setRequestURI(requestUri);
+		MockHttpServletResponse response = new MockHttpServletResponse();
+		MockFilterChain filterChain = new MockFilterChain();
+
+		filter.doFilter(request, response, filterChain);
+
+		assertThat(filterChain.getRequest()).isNotNull();
+		assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+		verifyNoInteractions(jwtProvider, tokenCodeRepository, tokenHashService);
 	}
 
 	private MockHttpServletRequest bearerRequest() {

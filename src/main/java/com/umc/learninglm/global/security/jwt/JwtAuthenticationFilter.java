@@ -19,6 +19,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Set;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -26,7 +27,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 	private static final String AUTHORIZATION_HEADER = "Authorization";
 	private static final String BEARER_PREFIX = "Bearer ";
 	private static final String SIGNUP_PATH = "/api/auth/signup";
+	private static final String LOGIN_PATH = "/api/auth/login";
+	private static final String REISSUE_PATH = "/api/auth/reissue";
 	private static final String PASSWORD_RESET_PATH = "/api/auth/password";
+	private static final Set<String> ACCESS_TOKEN_FREE_PATHS = Set.of(
+			SIGNUP_PATH,
+			LOGIN_PATH,
+			REISSUE_PATH,
+			PASSWORD_RESET_PATH);
 
 	private final JwtProvider jwtProvider;
 	private final TokenCodeRepository tokenCodeRepository;
@@ -46,8 +54,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
 	@Override
 	protected boolean shouldNotFilter(HttpServletRequest request) {
-		String path = request.getRequestURI();
-		return SIGNUP_PATH.equals(path) || PASSWORD_RESET_PATH.equals(path);
+		return ACCESS_TOKEN_FREE_PATHS.contains(request.getRequestURI());
 	}
 
 	@Override
