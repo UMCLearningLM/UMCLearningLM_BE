@@ -23,10 +23,14 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Locale;
+import java.util.Map;
 
 @Component
 @Slf4j
 public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
+
+	private static final Map<String, UserProvider> SUPPORTED_PROVIDERS = Map.of(
+			"google", UserProvider.GOOGLE);
 
 	private final SocialLoginService socialLoginService;
 	private final OAuth2FailureHandler oAuth2FailureHandler;
@@ -47,10 +51,9 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 			HttpServletResponse response,
 			Authentication authentication) throws IOException, ServletException {
 		try {
-			OAuth2AuthenticationToken oAuth2Token = (OAuth2AuthenticationToken) authentication;
-			OidcUser oidcUser = (OidcUser) oAuth2Token.getPrincipal();
-			UserProvider provider = UserProvider.valueOf(
-					oAuth2Token.getAuthorizedClientRegistrationId().toUpperCase(Locale.ROOT));
+			OAuth2AuthenticationToken oAuth2Token = resolveOAuth2Token(authentication);
+			OidcUser oidcUser = resolveOidcUser(oAuth2Token);
+			UserProvider provider = resolveProvider(oAuth2Token.getAuthorizedClientRegistrationId());
 
 			AuthTokenResponse tokenResponse = socialLoginService.login(
 					provider,
@@ -70,6 +73,31 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 			invalidateSession(request);
 			oAuth2FailureHandler.writeFailure(response, ErrorCode.SOCIAL_ACCOUNT_PROCESSING_FAILED);
 		}
+	}
+
+	private OAuth2AuthenticationToken resolveOAuth2Token(Authentication authentication) {
+		if (authentication instanceof OAuth2AuthenticationToken oAuth2Token) {
+			return oAuth2Token;
+		}
+		throw new CustomException(ErrorCode.OAUTH_AUTHENTICATION_FAILED);
+	}
+
+	private OidcUser resolveOidcUser(OAuth2AuthenticationToken oAuth2Token) {
+		if (oAuth2Token.getPrincipal() instanceof OidcUser oidcUser) {
+			return oidcUser;
+		}
+		throw new CustomException(ErrorCode.OAUTH_AUTHENTICATION_FAILED);
+	}
+
+	private UserProvider resolveProvider(String registrationId) {
+		String providerKey = registrationId == null
+				? ""
+				: registrationId.toLowerCase(Locale.ROOT);
+		UserProvider provider = SUPPORTED_PROVIDERS.get(providerKey);
+		if (provider == null) {
+			throw new CustomException(ErrorCode.SOCIAL_ACCOUNT_PROCESSING_FAILED);
+		}
+		return provider;
 	}
 
 	private void writeSuccess(HttpServletResponse response, AuthTokenResponse tokenResponse) throws IOException {

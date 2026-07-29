@@ -7,6 +7,8 @@ import com.umc.learninglm.domain.auth.enums.TokenType;
 import com.umc.learninglm.domain.auth.enums.UserRole;
 import com.umc.learninglm.domain.auth.repository.TokenCodeRepository;
 import com.umc.learninglm.domain.auth.service.TokenHashService;
+import com.umc.learninglm.global.error.CustomException;
+import com.umc.learninglm.global.error.ErrorCode;
 import io.jsonwebtoken.Claims;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -98,6 +100,36 @@ class JwtAuthenticationFilterTest {
 		assertThat(response.getStatus()).isEqualTo(401);
 		assertThat(responseBody.path("code").asText()).isEqualTo("AUTH40105");
 		assertThat(filterChain.getRequest()).isNull();
+	}
+
+	@Test
+	void passesRequestWithoutAuthorizationHeaderWithoutAuthentication() throws Exception {
+		MockHttpServletRequest request = new MockHttpServletRequest();
+		MockHttpServletResponse response = new MockHttpServletResponse();
+		MockFilterChain filterChain = new MockFilterChain();
+
+		filter.doFilter(request, response, filterChain);
+
+		assertThat(filterChain.getRequest()).isNotNull();
+		assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+		verifyNoInteractions(jwtProvider, tokenCodeRepository, tokenHashService);
+	}
+
+	@Test
+	void rejectsInvalidAccessTokenWithoutContinuingFilterChain() throws Exception {
+		MockHttpServletRequest request = bearerRequest();
+		MockHttpServletResponse response = new MockHttpServletResponse();
+		MockFilterChain filterChain = new MockFilterChain();
+		when(jwtProvider.parseAccessToken("access-token"))
+				.thenThrow(new CustomException(ErrorCode.INVALID_ACCESS_TOKEN));
+
+		filter.doFilter(request, response, filterChain);
+
+		JsonNode responseBody = objectMapper.readTree(response.getContentAsString());
+		assertThat(response.getStatus()).isEqualTo(401);
+		assertThat(responseBody.path("code").asText()).isEqualTo("AUTH40104");
+		assertThat(filterChain.getRequest()).isNull();
+		assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
 	}
 
 	@ParameterizedTest

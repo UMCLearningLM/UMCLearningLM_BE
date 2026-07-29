@@ -19,6 +19,7 @@ import org.springframework.security.oauth2.client.authentication.OAuth2Authentic
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 
 import java.util.List;
 
@@ -34,6 +35,9 @@ class OAuth2HandlerTest {
 
 	@Mock
 	private OidcUser oidcUser;
+
+	@Mock
+	private OAuth2User oAuth2User;
 
 	private ObjectMapper objectMapper;
 	private OAuth2SuccessHandler successHandler;
@@ -77,7 +81,7 @@ class OAuth2HandlerTest {
 	@Test
 	void successHandlerWritesDomainErrorWhenSocialLoginFails() throws Exception {
 		MockHttpServletRequest request = new MockHttpServletRequest();
-		request.getSession();
+		MockHttpSession session = (MockHttpSession) request.getSession();
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		OAuth2AuthenticationToken authentication = googleAuthentication();
 		when(socialLoginService.login(
@@ -92,12 +96,66 @@ class OAuth2HandlerTest {
 		JsonNode responseBody = objectMapper.readTree(response.getContentAsString());
 		assertThat(response.getStatus()).isEqualTo(400);
 		assertThat(responseBody.path("code").asText()).isEqualTo("AUTH40001");
+		assertThat(session.isInvalid()).isTrue();
+	}
+
+	@Test
+	void successHandlerMapsUnexpectedRuntimeExceptionAndInvalidatesSession() throws Exception {
+		MockHttpServletRequest request = new MockHttpServletRequest();
+		MockHttpSession session = (MockHttpSession) request.getSession();
+		MockHttpServletResponse response = new MockHttpServletResponse();
+		OAuth2AuthenticationToken authentication = googleAuthentication();
+		when(socialLoginService.login(
+				UserProvider.GOOGLE,
+				"google-sub-123",
+				"user@example.com",
+				"홍길동"))
+				.thenThrow(new IllegalStateException("unexpected"));
+
+		successHandler.onAuthenticationSuccess(request, response, authentication);
+
+		JsonNode responseBody = objectMapper.readTree(response.getContentAsString());
+		assertThat(response.getStatus()).isEqualTo(500);
+		assertThat(responseBody.path("code").asText()).isEqualTo("AUTH50001");
+		assertThat(session.isInvalid()).isTrue();
+	}
+
+	@Test
+	void successHandlerRejectsUnsupportedProviderExplicitly() throws Exception {
+		MockHttpServletRequest request = new MockHttpServletRequest();
+		MockHttpSession session = (MockHttpSession) request.getSession();
+		MockHttpServletResponse response = new MockHttpServletResponse();
+		OAuth2AuthenticationToken authentication =
+				new OAuth2AuthenticationToken(oidcUser, List.of(), "github");
+
+		successHandler.onAuthenticationSuccess(request, response, authentication);
+
+		JsonNode responseBody = objectMapper.readTree(response.getContentAsString());
+		assertThat(response.getStatus()).isEqualTo(500);
+		assertThat(responseBody.path("code").asText()).isEqualTo("AUTH50001");
+		assertThat(session.isInvalid()).isTrue();
+	}
+
+	@Test
+	void successHandlerRejectsNonOidcPrincipalExplicitly() throws Exception {
+		MockHttpServletRequest request = new MockHttpServletRequest();
+		MockHttpSession session = (MockHttpSession) request.getSession();
+		MockHttpServletResponse response = new MockHttpServletResponse();
+		OAuth2AuthenticationToken authentication =
+				new OAuth2AuthenticationToken(oAuth2User, List.of(), "google");
+
+		successHandler.onAuthenticationSuccess(request, response, authentication);
+
+		JsonNode responseBody = objectMapper.readTree(response.getContentAsString());
+		assertThat(response.getStatus()).isEqualTo(401);
+		assertThat(responseBody.path("code").asText()).isEqualTo("AUTH40106");
+		assertThat(session.isInvalid()).isTrue();
 	}
 
 	@Test
 	void failureHandlerMapsInvalidStateError() throws Exception {
 		MockHttpServletRequest request = new MockHttpServletRequest();
-		request.getSession();
+		MockHttpSession session = (MockHttpSession) request.getSession();
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		OAuth2FailureHandler failureHandler = new OAuth2FailureHandler(objectMapper);
 		OAuth2AuthenticationException exception = new OAuth2AuthenticationException(
@@ -108,12 +166,17 @@ class OAuth2HandlerTest {
 		JsonNode responseBody = objectMapper.readTree(response.getContentAsString());
 		assertThat(response.getStatus()).isEqualTo(401);
 		assertThat(responseBody.path("code").asText()).isEqualTo("AUTH40107");
+		assertThat(session.isInvalid()).isTrue();
 	}
 
 	private OAuth2AuthenticationToken googleAuthentication() {
+		return oidcAuthentication("google");
+	}
+
+	private OAuth2AuthenticationToken oidcAuthentication(String registrationId) {
 		when(oidcUser.getSubject()).thenReturn("google-sub-123");
 		when(oidcUser.getEmail()).thenReturn("user@example.com");
 		when(oidcUser.getFullName()).thenReturn("홍길동");
-		return new OAuth2AuthenticationToken(oidcUser, List.of(), "google");
+		return new OAuth2AuthenticationToken(oidcUser, List.of(), registrationId);
 	}
 }

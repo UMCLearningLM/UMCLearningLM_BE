@@ -1,5 +1,8 @@
 package com.umc.learninglm.global.error;
 
+import com.fasterxml.jackson.databind.exc.InvalidFormatException;
+import com.umc.learninglm.domain.auth.enums.VerificationPurpose;
+import com.umc.learninglm.domain.auth.enums.VerificationType;
 import com.umc.learninglm.global.common.BaseResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -31,17 +34,23 @@ public class GlobalExceptionHandler {
 
 	@ExceptionHandler(HttpMessageNotReadableException.class)
 	public ResponseEntity<BaseResponse<Void>> handleUnreadableMessage(HttpMessageNotReadableException e) {
-		String causeMessage = e.getMostSpecificCause().getMessage();
-		ErrorCode errorCode;
-		if (causeMessage != null && causeMessage.contains("VerificationType")) {
-			errorCode = ErrorCode.VERIFICATION_TYPE_INVALID;
-		} else if (causeMessage != null && causeMessage.contains("VerificationPurpose")) {
-			errorCode = ErrorCode.VERIFICATION_PURPOSE_INVALID;
-		} else {
-			errorCode = ErrorCode.INVALID_INPUT_VALUE;
-		}
+		ErrorCode errorCode = resolveUnreadableMessageError(e);
 		return ResponseEntity.status(errorCode.getHttpStatus())
 				.body(BaseResponse.failure(errorCode.getCode(), errorCode.getMessage()));
+	}
+
+	private ErrorCode resolveUnreadableMessageError(HttpMessageNotReadableException exception) {
+		if (!(exception.getCause() instanceof InvalidFormatException invalidFormatException)) {
+			return ErrorCode.INVALID_INPUT_VALUE;
+		}
+		Class<?> targetType = invalidFormatException.getTargetType();
+		if (targetType == VerificationType.class) {
+			return ErrorCode.VERIFICATION_TYPE_INVALID;
+		}
+		if (targetType == VerificationPurpose.class) {
+			return ErrorCode.VERIFICATION_PURPOSE_INVALID;
+		}
+		return ErrorCode.INVALID_INPUT_VALUE;
 	}
 
 	private ErrorCode resolveValidationError(ObjectError error) {

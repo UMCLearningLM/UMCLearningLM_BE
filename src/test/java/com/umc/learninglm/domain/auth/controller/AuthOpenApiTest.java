@@ -203,6 +203,21 @@ class AuthOpenApiTest {
 	}
 
 	@Test
+	void emailVerificationReturnsDomainErrorCodeForInvalidVerificationPurpose() throws Exception {
+		mockMvc.perform(post("/api/auth/email/request")
+						.contentType(MediaType.APPLICATION_JSON)
+						.content("""
+								{
+								  "verificationType": "NON_LOGIN",
+								  "purpose": "INVALID",
+								  "email": "user@example.com"
+								}
+								"""))
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.code").value("AUTH40012"));
+	}
+
+	@Test
 	void loginEmailVerificationRequestRequiresAccessTokenHeader() throws Exception {
 		mockMvc.perform(post("/api/auth/email/request")
 						.contentType(MediaType.APPLICATION_JSON)
