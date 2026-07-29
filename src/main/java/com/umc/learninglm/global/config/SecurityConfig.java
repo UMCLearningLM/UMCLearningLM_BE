@@ -62,6 +62,7 @@ public class SecurityConfig {
 								"/api/auth/password",
 								"/api/auth/email/request",
 								"/api/auth/email/verify").permitAll()
+						.requestMatchers(HttpMethod.GET, "/api/tutorials/**").permitAll()
 						.anyRequest().authenticated()
 				)
 				.oauth2Login(oauth2 -> oauth2
