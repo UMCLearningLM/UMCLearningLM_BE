@@ -183,6 +183,7 @@ public class AuthService {
 	@Transactional
 	public ProfileResponse updateProfile(
 			String authenticatedEmail,
+			String authorization,
 			String emailVerificationToken,
 			ProfileUpdateRequest request) {
 		if (request.email() == null && request.newPassword() == null && request.nickname() == null) {
@@ -206,6 +207,9 @@ public class AuthService {
 			savedUser = userRepository.saveAndFlush(user);
 		} catch (DataIntegrityViolationException e) {
 			throw new CustomException(ErrorCode.EMAIL_ALREADY_EXISTS);
+		}
+		if (request.email() != null) {
+			revokeLoginTokensAfterEmailChange(savedUser, authorization);
 		}
 		return new ProfileResponse(
 				savedUser.getUserId(),
@@ -305,7 +309,7 @@ public class AuthService {
 		user.changePassword(passwordEncoder.encode(request.newPassword()));
 		verificationToken.markUsed(LocalDateTime.now());
 
-		return new PasswordResetResponse(true, true);
+		return new PasswordResetResponse(true);
 	}
 
 	private void changeEmail(User user, String emailVerificationToken, String newEmail) {
@@ -419,6 +423,31 @@ public class AuthService {
 						TokenStatus.ACTIVE);
 		LocalDateTime revokedAt = LocalDateTime.now();
 		activeTokens.forEach(token -> token.revoke(revokedAt));
+	}
+
+	private void revokeLoginTokensAfterEmailChange(User user, String authorization) {
+		String accessToken = resolveBearerToken(authorization);
+		Claims accessClaims = jwtProvider.parseAccessToken(accessToken);
+		LocalDateTime revokedAt = LocalDateTime.now();
+		tokenCodeRepository.findAllByUserAndTypeAndStatus(
+						user,
+						TokenType.REFRESH,
+						TokenStatus.ACTIVE)
+				.forEach(token -> token.revoke(revokedAt));
+		blacklistAccessToken(user, accessToken, accessClaims);
+	}
+
+	private void blacklistAccessToken(User user, String accessToken, Claims accessClaims) {
+		String accessTokenHash = tokenHashService.hash(accessToken);
+		if (!tokenCodeRepository.existsByTokenHashAndTypeAndStatus(
+				accessTokenHash,
+				TokenType.ACCESS_BLACKLIST,
+				TokenStatus.ACTIVE)) {
+			tokenCodeRepository.save(TokenCode.createAccessBlacklist(
+					user,
+					accessTokenHash,
+					jwtProvider.getExpiration(accessClaims)));
+		}
 	}
 
 	private int toExpirationSeconds(long expirationMs) {

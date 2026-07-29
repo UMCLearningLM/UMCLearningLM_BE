@@ -13,6 +13,7 @@ import com.umc.learninglm.domain.auth.dto.response.EmailVerificationResponse;
 import com.umc.learninglm.domain.auth.dto.response.EmailVerificationVerifyResponse;
 import com.umc.learninglm.domain.auth.dto.response.LogoutResponse;
 import com.umc.learninglm.domain.auth.dto.response.MeResponse;
+import com.umc.learninglm.domain.auth.dto.response.PasswordResetResponse;
 import com.umc.learninglm.domain.auth.dto.response.ProfileResponse;
 import com.umc.learninglm.domain.auth.dto.response.ReissueResponse;
 import com.umc.learninglm.domain.auth.entity.TokenCode;
@@ -365,10 +366,11 @@ class AuthServiceTest {
 		when(passwordEncoder.matches("NewPassword123!", "old-password-hash")).thenReturn(false);
 		when(passwordEncoder.encode("NewPassword123!")).thenReturn("new-password-hash");
 
-		authService.resetPassword(
+		PasswordResetResponse response = authService.resetPassword(
 				"Bearer temporary-token",
 				new PasswordResetRequest("NewPassword123!"));
 
+		assertThat(response.passwordReset()).isTrue();
 		assertThat(user.getPasswordHash()).isEqualTo("new-password-hash");
 		verify(verificationToken).markUsed(any(LocalDateTime.class));
 	}
@@ -403,16 +405,49 @@ class AuthServiceTest {
 		ProfileResponse response = authService.updateProfile(
 				"user@example.com",
 				null,
+				null,
 				new ProfileUpdateRequest(null, null, null, "새닉네임"));
 
 		assertThat(response.nickname()).isEqualTo("새닉네임");
 		verify(userRepository).saveAndFlush(user);
+		verify(tokenCodeRepository, never()).findAllByUserAndTypeAndStatus(
+				any(User.class), any(TokenType.class), any(TokenStatus.class));
+	}
+
+	@Test
+	void updateProfileChangesPasswordWithoutRevokingLoginTokens() {
+		User user = User.createLocal("user@example.com", "old-password-hash", "홍길동");
+		when(userRepository.findByEmail("user@example.com")).thenReturn(Optional.of(user));
+		when(passwordEncoder.matches("CurrentPassword123!", "old-password-hash")).thenReturn(true);
+		when(passwordEncoder.matches("NewPassword123!", "old-password-hash")).thenReturn(false);
+		when(passwordEncoder.encode("NewPassword123!")).thenReturn("new-password-hash");
+		when(userRepository.saveAndFlush(user)).thenReturn(user);
+
+		authService.updateProfile(
+				"user@example.com",
+				"Bearer access-token",
+				null,
+				new ProfileUpdateRequest(
+						null,
+						"CurrentPassword123!",
+						"NewPassword123!",
+						null));
+
+		assertThat(user.getPasswordHash()).isEqualTo("new-password-hash");
+		verify(tokenCodeRepository, never()).findAllByUserAndTypeAndStatus(
+				any(User.class), any(TokenType.class), any(TokenStatus.class));
+		verify(tokenCodeRepository, never()).existsByTokenHashAndTypeAndStatus(
+				anyString(), any(TokenType.class), any(TokenStatus.class));
 	}
 
 	@Test
 	void updateProfileUsesEmailChangeTokenBoundToAuthenticatedUser() {
 		User user = mock(User.class);
 		TokenCode verificationToken = mock(TokenCode.class);
+		TokenCode firstRefreshToken = mock(TokenCode.class);
+		TokenCode secondRefreshToken = mock(TokenCode.class);
+		Claims accessClaims = mock(Claims.class);
+		LocalDateTime accessTokenExpiresAt = LocalDateTime.now().plusMinutes(30);
 		when(user.getUserId()).thenReturn(1L);
 		when(user.getEmail()).thenReturn("old@example.com");
 		when(userRepository.findByEmail("old@example.com")).thenReturn(Optional.of(user));
@@ -424,14 +459,33 @@ class AuthServiceTest {
 		when(verificationToken.getUser()).thenReturn(user);
 		when(userRepository.existsByEmail("new@example.com")).thenReturn(false);
 		when(userRepository.saveAndFlush(user)).thenReturn(user);
+		when(jwtProvider.parseAccessToken("access-token")).thenReturn(accessClaims);
+		when(tokenCodeRepository.findAllByUserAndTypeAndStatus(
+				user, TokenType.REFRESH, TokenStatus.ACTIVE))
+				.thenReturn(List.of(firstRefreshToken, secondRefreshToken));
+		when(tokenHashService.hash("access-token")).thenReturn("access-token-hash");
+		when(tokenCodeRepository.existsByTokenHashAndTypeAndStatus(
+				"access-token-hash", TokenType.ACCESS_BLACKLIST, TokenStatus.ACTIVE))
+				.thenReturn(false);
+		when(jwtProvider.getExpiration(accessClaims)).thenReturn(accessTokenExpiresAt);
+		when(tokenCodeRepository.save(any(TokenCode.class)))
+				.thenAnswer(invocation -> invocation.getArgument(0));
 
 		authService.updateProfile(
 				"old@example.com",
+				"Bearer access-token",
 				"temporary-token",
 				new ProfileUpdateRequest("new@example.com", null, null, null));
 
 		verify(user).changeEmail("new@example.com");
 		verify(verificationToken).markUsed(any(LocalDateTime.class));
+		verify(firstRefreshToken).revoke(any(LocalDateTime.class));
+		verify(secondRefreshToken).revoke(any(LocalDateTime.class));
+		verify(tokenCodeRepository).save(org.mockito.ArgumentMatchers.argThat(tokenCode ->
+				tokenCode.getUser() == user
+						&& tokenCode.getType() == TokenType.ACCESS_BLACKLIST
+						&& tokenCode.getTokenHash().equals("access-token-hash")
+						&& tokenCode.getExpiresAt().equals(accessTokenExpiresAt)));
 	}
 
 	private void stubTokenIssuance() {

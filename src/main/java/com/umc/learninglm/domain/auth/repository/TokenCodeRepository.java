@@ -1,6 +1,7 @@
 package com.umc.learninglm.domain.auth.repository;
 
 import com.umc.learninglm.domain.auth.entity.TokenCode;
+import com.umc.learninglm.domain.auth.entity.User;
 import com.umc.learninglm.domain.auth.enums.TokenStatus;
 import com.umc.learninglm.domain.auth.enums.TokenType;
 import com.umc.learninglm.domain.auth.enums.VerificationPurpose;
@@ -33,6 +34,12 @@ public interface TokenCodeRepository extends JpaRepository<TokenCode, Long> {
 			String email,
 			TokenType type,
 			VerificationPurpose purpose,
+			TokenStatus status);
+
+	@Lock(LockModeType.PESSIMISTIC_WRITE)
+	List<TokenCode> findAllByUserAndTypeAndStatus(
+			User user,
+			TokenType type,
 			TokenStatus status);
 
 	long countByEmailAndTypeAndCreatedAtAfter(String email, TokenType type, LocalDateTime createdAt);

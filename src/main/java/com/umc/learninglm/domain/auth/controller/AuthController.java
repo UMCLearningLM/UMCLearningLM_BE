@@ -184,6 +184,7 @@ public class AuthController {
 			• 이메일 변경: POST /auth/email/request와 POST /auth/email/verify를 각각 verificationType=LOGIN, purpose=EMAIL_CHANGE, 변경할 새 이메일로 호출합니다. 검증 응답의 temporaryAccessToken을 Swagger 상단 **Authorize > emailVerificationToken**에 등록하고 Body의 email에도 인증한 새 이메일을 입력합니다.
 
 			이메일 변경용 임시 토큰을 bearerAuth에 넣으면 안 됩니다. bearerAuth에는 기존 로그인 Access Token을 유지합니다.
+			닉네임 또는 비밀번호만 변경하면 로그인 토큰은 유지됩니다. 이메일을 변경하면 현재 Access Token과 활성 Refresh Token이 폐기되므로 다시 로그인해야 합니다.
 			""",
 			security = @SecurityRequirement(name = "bearerAuth"))
 	@ApiResponses({
@@ -196,10 +197,13 @@ public class AuthController {
 	public BaseResponse<ProfileResponse> updateProfile(
 			Authentication authentication,
 			@Parameter(hidden = true)
+			@RequestHeader(value = "Authorization", required = false) String authorization,
+			@Parameter(hidden = true)
 			@RequestHeader(value = "X-Email-Verification-Token", required = false) String emailVerificationToken,
 			@Valid @RequestBody ProfileUpdateRequest request) {
 		return BaseResponse.success(authService.updateProfile(
 				authentication.getName(),
+				authorization,
 				emailVerificationToken,
 				request));
 	}
@@ -305,6 +309,7 @@ public class AuthController {
 			④ Body의 newPassword에 기존 비밀번호와 다른 새 비밀번호를 입력합니다.
 
 			PASSWORD_RESET 목적의 임시 Access Token만 사용할 수 있으며, 토큰은 30분 동안 유효하고 변경 성공 시 사용 처리됩니다.
+			비밀번호 재설정으로 기존 로그인 Access Token과 Refresh Token이 폐기되지는 않습니다.
 			""",
 			security = @SecurityRequirement(name = "emailVerificationToken"))
 	@ApiResponses({
