@@ -4,9 +4,7 @@ import com.umc.learninglm.domain.category.enums.CategoryCode;
 import com.umc.learninglm.domain.category.repository.CategoryRepository;
 import com.umc.learninglm.domain.flow.repository.FlowCategoryRepository;
 import com.umc.learninglm.domain.flow.repository.FlowRepository;
-import com.umc.learninglm.domain.home.dto.query.FlowCategoryQuery;
 import com.umc.learninglm.domain.home.dto.query.*;
-import com.umc.learninglm.domain.home.dto.query.TutorialCategoryQuery;
 import com.umc.learninglm.domain.home.dto.response.HomeResponse;
 import com.umc.learninglm.domain.tutorial.repository.SavedTutorialRepository;
 import com.umc.learninglm.domain.tutorial.repository.TutorialCategoryRepository;
@@ -25,6 +23,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
@@ -33,6 +32,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -47,6 +47,19 @@ public class HomeService {
             CategoryCode.REVIEW,
             CategoryCode.AI_TOOL
     );
+
+    private CategoryCode parseCategoryCode(
+            Long categoryId,
+            String code
+    ) {
+        try {
+            return CategoryCode.valueOf(code);
+        } catch (IllegalArgumentException | NullPointerException exception) {
+            log.error("유효하지 않은 카테고리 코드: categoryId={}, code={}",categoryId,code);
+
+            throw new CustomException(ErrorCode.HOME_CATEGORY_CODE_INVALID);
+        }
+    }
 
     private final UserRepository userRepository;
     private final SavedTutorialRepository savedTutorialRepository;
@@ -216,7 +229,10 @@ public class HomeService {
 
         for (CategoryQuery query : queriedCategories) {
             CategoryCode categoryCode =
-                    CategoryCode.valueOf(query.code());
+                    parseCategoryCode(
+                            query.categoryId(),
+                            query.code()
+                    );
 
             categoryMap.put(
                     categoryCode,
@@ -230,7 +246,15 @@ public class HomeService {
 
         // DB의 sortOrder가 아닌 홈 화면에서 정의한 순서로 카테고리를 반환
         return HOME_CATEGORY_ORDER.stream()
-                .map(categoryMap::get)
+                .map(categoryCode -> {
+                    HomeResponse.CategoryResponse category = categoryMap.get(categoryCode);
+                    if (category == null) {
+                        log.error("홈 화면 필수 카테고리 누락: categoryCode={}", categoryCode);
+                        throw new CustomException(ErrorCode.HOME_CATEGORY_CONFIGURATION_MISSING);
+                    }
+
+                    return category;
+                })
                 .toList();
     }
 
@@ -340,13 +364,9 @@ public class HomeService {
     private HomeResponse.CategoryResponse toTutorialCategoryResponse(
             TutorialCategoryQuery query
     ) {
-        CategoryCode categoryCode =
-                CategoryCode.valueOf(query.code());
-
-        return new HomeResponse.CategoryResponse(
+        return toCategoryResponse(
                 query.categoryId(),
-                categoryCode.name(),
-                categoryCode.getDisplayName()
+                query.code()
         );
     }
 
@@ -354,11 +374,21 @@ public class HomeService {
     private HomeResponse.CategoryResponse toFlowCategoryResponse(
             FlowCategoryQuery query
     ) {
-        CategoryCode categoryCode =
-                CategoryCode.valueOf(query.code());
+        return toCategoryResponse(
+                query.categoryId(),
+                query.code()
+        );
+    }
+
+    // 카테고리 코드를 검증하고 홈 응답 DTO로 변환
+    private HomeResponse.CategoryResponse toCategoryResponse(
+            Long categoryId,
+            String code
+    ) {
+        CategoryCode categoryCode = parseCategoryCode(categoryId, code);
 
         return new HomeResponse.CategoryResponse(
-                query.categoryId(),
+                categoryId,
                 categoryCode.name(),
                 categoryCode.getDisplayName()
         );
