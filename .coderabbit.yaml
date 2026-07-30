@@ -15,8 +15,8 @@ reviews:
     base_branches:
       - "main"
       - "master"
-      - "develop"
-      - "feature/*"
+      - "dev"
+      - "feat/*"
   path_filters:
     - "!**/*.lock"
     - "!**/build/**"
