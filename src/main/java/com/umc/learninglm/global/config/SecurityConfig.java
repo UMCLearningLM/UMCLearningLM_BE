@@ -48,7 +48,7 @@ public class SecurityConfig {
 		http
 				.cors(Customizer.withDefaults())
 				.csrf(csrf -> csrf.disable())
-				.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
+				.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 				.formLogin(form -> form.disable())
 				.httpBasic(basic -> basic.disable())
 				.exceptionHandling(exception -> exception
@@ -62,7 +62,9 @@ public class SecurityConfig {
 								"/api/auth/password",
 								"/api/auth/email/request",
 								"/api/auth/email/verify").permitAll()
-						.requestMatchers(HttpMethod.GET, "/api/tutorials/**").permitAll()
+						.requestMatchers(HttpMethod.GET,
+                                "/api/tutorials/**",
+                                "/api/home").permitAll()
 						.anyRequest().authenticated()
 				)
 				.oauth2Login(oauth2 -> oauth2
