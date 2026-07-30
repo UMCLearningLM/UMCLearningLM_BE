@@ -57,12 +57,13 @@ public class TutorialController {
 	}
 
 	@GetMapping("/{tutorialId}")
-	@Operation(summary = "튜토리얼 상세 조회", description = "단일 튜토리얼의 요약·블록 흐름·활용 사례·예시를 조회합니다.")
+	@Operation(summary = "튜토리얼 상세 조회", description = "단일 튜토리얼의 요약·블록 흐름·활용 사례·예시를 조회합니다. Authorization 토큰이 있고 저장 이력이 있으면 progress를 포함합니다.")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "튜토리얼 상세 조회 성공"),
-			@ApiResponse(responseCode = "404", description = "TUTORIAL40401: 존재하지 않는 튜토리얼")
+			@ApiResponse(responseCode = "404", description = "TUTORIAL40401: 존재하지 않는 튜토리얼"),
+			@ApiResponse(responseCode = "401", description = "AUTH40104: 유효하지 않은 토큰 (토큰을 보낸 경우에만)")
 	})
-	@Parameter(name = "Authorization", description = "있으면 saved 여부 반영", in = ParameterIn.HEADER, required = false, example = "Bearer access-token")
+	@Parameter(name = "Authorization", description = "선택. 있으면 progress 포함", in = ParameterIn.HEADER, required = false, example = "Bearer access-token")
 	public BaseResponse<TutorialDetailResponse> getTutorialDetail(
 			@PathVariable Long tutorialId,
 			@RequestHeader(value = "Authorization", required = false) String authorization) {
@@ -73,9 +74,10 @@ public class TutorialController {
 	@Operation(summary = "가이드 모드 단계 + 추천 블록 조회", description = "가이드 모드 진입 시 단계 목록과 단계별 추천 블록(필수 여부·기본 옵션 포함)을 일괄 조회합니다. Authorization 토큰이 있고 진행 정보가 있으면 progress를 포함합니다.")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "단계 목록 조회 성공"),
-			@ApiResponse(responseCode = "404", description = "TUTORIAL40401: 존재하지 않는 튜토리얼 / TUTORIAL40403: 단계 정보 없음")
+			@ApiResponse(responseCode = "404", description = "TUTORIAL40401: 존재하지 않는 튜토리얼 / TUTORIAL40403: 단계 정보 없음"),
+			@ApiResponse(responseCode = "401", description = "AUTH40104: 유효하지 않은 토큰 (토큰을 보낸 경우에만)")
 	})
-	@Parameter(name = "Authorization", description = "있으면 progress 포함", in = ParameterIn.HEADER, required = false, example = "Bearer access-token")
+	@Parameter(name = "Authorization", description = "선택. 있으면 progress 포함", in = ParameterIn.HEADER, required = false, example = "Bearer access-token")
 	public BaseResponse<TutorialStepsResponse> getTutorialSteps(
 			@PathVariable Long tutorialId,
 			@RequestHeader(value = "Authorization", required = false) String authorization) {
