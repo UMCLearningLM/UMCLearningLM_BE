@@ -3,6 +3,7 @@ package com.umc.learninglm.domain.tutorial.service;
 import com.umc.learninglm.domain.auth.entity.User;
 import com.umc.learninglm.domain.auth.repository.UserRepository;
 import com.umc.learninglm.domain.flow.entity.Flow;
+import com.umc.learninglm.domain.flow.enums.FlowMode;
 import com.umc.learninglm.domain.flow.repository.FlowRepository;
 import com.umc.learninglm.domain.tutorial.dto.response.TutorialProgressSaveResponse;
 import com.umc.learninglm.domain.tutorial.dto.response.TutorialProgressStartResponse;
@@ -62,7 +63,8 @@ public class TutorialProgressService {
 
 	// 시작: IN_PROGRESS 전환 + flow 연결. 저장 이력 없으면 생성(upsert).
 	// 진행도는 특정 flow에서 단계별 필수 블록을 채운 정도라, 같은 flow 재호출일 때만 진행 상태를 보존(멱등).
-	// 진행 중인데 다른 flow로 호출하면 진행 기록이 소실되므로 거부(TUTORIAL40902). 저장 해제 후 재시작해야 함.
+	// 1단계 초기화는 이력 없음/NOT_STARTED에서만 일어난다. 그 외에는 기록이 소실되므로 거부하고,
+	// 저장 해제 후 새 flow로 다시 시작하도록 유도한다. (다른 flow 40902 / 완료 40903)
 	@Transactional
 	public TutorialProgressStartResponse startTutorial(Long tutorialId, Long flowId) {
 		User user = currentUser();
@@ -73,9 +75,17 @@ public class TutorialProgressService {
 				|| !tutorialId.equals(flow.getTutorial().getTutorialId())) {
 			throw new CustomException(ErrorCode.TUTORIAL_FLOW_MISMATCH);
 		}
+		// 진행도는 튜토리얼 단계를 따라간 정도라 가이드 모드 flow에만 성립한다.
+		if (flow.getMode() != FlowMode.GUIDED) {
+			throw new CustomException(ErrorCode.TUTORIAL_NOT_GUIDED_FLOW);
+		}
 
 		SavedTutorial saved = savedTutorialRepository.findByUser_UserIdAndTutorial_TutorialId(user.getUserId(), tutorialId)
 				.orElseGet(() -> SavedTutorial.createBookmark(user, tutorial));
+		if (saved.getStatus() == SavedTutorialStatus.COMPLETED) {
+			// 완료된 flow는 이미 완성본이라 1단계로 되돌릴 수 없다. 저장 해제 후 새 flow로 시작해야 함.
+			throw new CustomException(ErrorCode.TUTORIAL_ALREADY_COMPLETED);
+		}
 		if (saved.getStatus() == SavedTutorialStatus.IN_PROGRESS) {
 			Flow currentFlow = saved.getFlow();
 			if (currentFlow == null || !flowId.equals(currentFlow.getFlowId())) {
@@ -177,11 +187,10 @@ public class TutorialProgressService {
 		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 		if (authentication == null || !authentication.isAuthenticated()) {
 			// 이 엔드포인트들은 SecurityConfig에서 authenticated()로 보호됨. 방어적 처리.
-			throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR);
+			throw new CustomException(ErrorCode.ACCESS_TOKEN_MISSING);
 		}
 		String email = authentication.getName();
 		return userRepository.findByEmail(email)
-				// TODO: auth 병합 후 AUTH40401(사용자 없음)로 교체
-				.orElseThrow(() -> new CustomException(ErrorCode.INTERNAL_SERVER_ERROR));
+				.orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 	}
 }
