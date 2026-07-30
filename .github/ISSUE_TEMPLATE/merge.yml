@@ -8,7 +8,7 @@ body:
     id: overview
     attributes:
       label: "🛠️ Issue Overview"
-      placeholder: "예: develop 브랜치를 master에 병합"
+      placeholder: "예: feat/login 브랜치를 dev에 병합"
     validations:
       required: true
   - type: textarea

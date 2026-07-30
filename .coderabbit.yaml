@@ -16,7 +16,7 @@ reviews:
       - "main"
       - "master"
       - "dev"
-      - "feat/*"
+      - "feat/.*"
   path_filters:
     - "!**/*.lock"
     - "!**/build/**"
