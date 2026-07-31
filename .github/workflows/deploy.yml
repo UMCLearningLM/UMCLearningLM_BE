@@ -60,6 +60,7 @@ jobs:
             # 백그라운드 실행 (로그는 app.log에 기록)
             nohup java -jar \
               -Dspring.profiles.active=prod \
+              -Dspring.config.additional-location=/home/ubuntu/app/ \
               "$JAR_FILE" > /home/ubuntu/app/app.log 2>&1 &
 
             sleep 10
