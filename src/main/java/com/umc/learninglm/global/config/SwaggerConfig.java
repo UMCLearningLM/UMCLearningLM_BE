@@ -21,6 +21,8 @@ public class SwaggerConfig {
 	private static final String PROFILE_UPDATE_PATH = "/auth/me/profile";
 	private static final String EMAIL_REQUEST_PATH = "/auth/email/request";
 	private static final String EMAIL_VERIFY_PATH = "/auth/email/verify";
+	private static final String TUTORIAL_DETAIL_PATH = "/tutorials/{tutorialId}";
+	private static final String TUTORIAL_STEPS_PATH = "/tutorials/{tutorialId}/steps";
 
 	@Bean
 	public OpenAPI openAPI() {
@@ -57,6 +59,8 @@ public class SwaggerConfig {
 			setProfileSecurity(pathsWithoutApiPrefix);
 			setOptionalBearerSecurity(pathsWithoutApiPrefix, EMAIL_REQUEST_PATH);
 			setOptionalBearerSecurity(pathsWithoutApiPrefix, EMAIL_VERIFY_PATH);
+			setOptionalBearerSecurityOnGet(pathsWithoutApiPrefix, TUTORIAL_DETAIL_PATH);
+			setOptionalBearerSecurityOnGet(pathsWithoutApiPrefix, TUTORIAL_STEPS_PATH);
 		};
 	}
 
@@ -76,6 +80,16 @@ public class SwaggerConfig {
 			return;
 		}
 		paths.get(path).getPost().setSecurity(List.of(
+				new SecurityRequirement(),
+				new SecurityRequirement().addList(BEARER_AUTH)));
+	}
+
+	// permitAll GET 중 토큰이 있으면 사용자별 정보를 더해 주는 API — 인증 없음/bearerAuth 둘 다 허용으로 표기
+	private void setOptionalBearerSecurityOnGet(Paths paths, String path) {
+		if (paths.get(path) == null || paths.get(path).getGet() == null) {
+			return;
+		}
+		paths.get(path).getGet().setSecurity(List.of(
 				new SecurityRequirement(),
 				new SecurityRequirement().addList(BEARER_AUTH)));
 	}
