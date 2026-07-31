@@ -150,13 +150,15 @@ public class TutorialService {
 	}
 
 	// 토큰이 없거나 익명이면 빈 값. 잘못된 토큰은 JwtAuthenticationFilter가 먼저 걸러낸다(AUTH40104).
+	// 토큰은 유효한데 사용자가 없으면 비정상이므로 예외로 처리한다(홈 도메인과 동일).
 	private Optional<User> currentUserOrEmpty() {
 		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 		if (authentication == null || !authentication.isAuthenticated()
 				|| authentication instanceof AnonymousAuthenticationToken) {
 			return Optional.empty();
 		}
-		return userRepository.findByEmail(authentication.getName());
+		return Optional.of(userRepository.findByEmail(authentication.getName())
+				.orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND)));
 	}
 
 	private Tutorial findPublishedOrThrow(Long tutorialId) {
