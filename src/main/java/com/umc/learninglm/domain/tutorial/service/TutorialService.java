@@ -3,6 +3,8 @@ package com.umc.learninglm.domain.tutorial.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.umc.learninglm.domain.auth.entity.User;
+import com.umc.learninglm.domain.auth.repository.UserRepository;
 import com.umc.learninglm.domain.block.entity.Block;
 import com.umc.learninglm.domain.category.entity.Category;
 import com.umc.learninglm.domain.category.enums.CategoryCode;
@@ -12,6 +14,7 @@ import com.umc.learninglm.domain.tutorial.dto.response.TutorialCategoryResponse;
 import com.umc.learninglm.domain.tutorial.dto.response.TutorialDetailResponse;
 import com.umc.learninglm.domain.tutorial.dto.response.TutorialExampleResponse;
 import com.umc.learninglm.domain.tutorial.dto.response.TutorialListResponse;
+import com.umc.learninglm.domain.tutorial.dto.response.TutorialProgressResponse;
 import com.umc.learninglm.domain.tutorial.dto.response.TutorialStepBlockResponse;
 import com.umc.learninglm.domain.tutorial.dto.response.TutorialStepResponse;
 import com.umc.learninglm.domain.tutorial.dto.response.TutorialStepsResponse;
@@ -23,6 +26,7 @@ import com.umc.learninglm.domain.tutorial.entity.TutorialCategory;
 import com.umc.learninglm.domain.tutorial.entity.TutorialStep;
 import com.umc.learninglm.domain.tutorial.enums.Difficulty;
 import com.umc.learninglm.domain.tutorial.enums.TutorialStatus;
+import com.umc.learninglm.domain.tutorial.repository.SavedTutorialRepository;
 import com.umc.learninglm.domain.tutorial.repository.TutorialBlockRepository;
 import com.umc.learninglm.domain.tutorial.repository.TutorialCategoryRepository;
 import com.umc.learninglm.domain.tutorial.repository.TutorialRepository;
@@ -33,7 +37,11 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -45,6 +53,8 @@ public class TutorialService {
 	private final TutorialCategoryRepository tutorialCategoryRepository;
 	private final TutorialStepRepository tutorialStepRepository;
 	private final TutorialBlockRepository tutorialBlockRepository;
+	private final SavedTutorialRepository savedTutorialRepository;
+	private final UserRepository userRepository;
 	private final ObjectMapper objectMapper;
 
 	// 목록: status=PUBLISHED만, q(title·summary 부분일치)·categoryId·difficulty 필터, createdAt DESC.
@@ -105,7 +115,7 @@ public class TutorialService {
 				blockFlow,
 				blockResponses,
 				example,
-				false // TODO: 인증 붙으면 SavedTutorial 조회로 saved 반영
+				loadProgress(tutorialId)
 		);
 	}
 
@@ -123,8 +133,32 @@ public class TutorialService {
 				.map(this::toStepResponse)
 				.toList();
 
-		// TODO: 인증 붙으면 SavedTutorial 조회로 progress 반영 (현재 null)
-		return new TutorialStepsResponse(tutorial.getTutorialId(), tutorial.getTitle(), steps.size(), null, stepResponses);
+		return new TutorialStepsResponse(
+				tutorial.getTutorialId(), tutorial.getTitle(), steps.size(), loadProgress(tutorialId), stepResponses);
+	}
+
+	// 선택적 인증 — 비로그인이면 null. 두 조회 API 모두 permitAll이라 토큰이 없어도 조회는 성공해야 한다.
+	private TutorialProgressResponse loadProgress(Long tutorialId) {
+		return currentUserOrEmpty()
+				.flatMap(user -> savedTutorialRepository
+						.findByUser_UserIdAndTutorial_TutorialId(user.getUserId(), tutorialId))
+				.map(saved -> new TutorialProgressResponse(
+						saved.getCurrentStepOrder(),
+						saved.getStatus().name(),
+						saved.getFlow() == null ? null : saved.getFlow().getFlowId()))
+				.orElse(null);
+	}
+
+	// 토큰이 없거나 익명이면 빈 값. 잘못된 토큰은 JwtAuthenticationFilter가 먼저 걸러낸다(AUTH40104).
+	// 토큰은 유효한데 사용자가 없으면 비정상이므로 예외로 처리한다(홈 도메인과 동일).
+	private Optional<User> currentUserOrEmpty() {
+		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+		if (authentication == null || !authentication.isAuthenticated()
+				|| authentication instanceof AnonymousAuthenticationToken) {
+			return Optional.empty();
+		}
+		return Optional.of(userRepository.findByEmail(authentication.getName())
+				.orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND)));
 	}
 
 	private Tutorial findPublishedOrThrow(Long tutorialId) {

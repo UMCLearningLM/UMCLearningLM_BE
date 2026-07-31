@@ -18,6 +18,6 @@ public record TutorialDetailResponse(
 		@Schema(description = "블록 흐름 이름 목록 (순서대로)") List<String> blockFlow,
 		@Schema(description = "블록 상세 목록") List<TutorialBlockResponse> blocks,
 		@Schema(description = "예시 입력/결과") TutorialExampleResponse example,
-		@Schema(description = "로그인 사용자의 저장 여부 (비로그인 시 false)", example = "false") boolean saved
+		@Schema(description = "로그인 사용자의 저장·진행 정보. 비로그인이거나 저장 이력이 없으면 null", nullable = true) TutorialProgressResponse progress
 ) {
 }
