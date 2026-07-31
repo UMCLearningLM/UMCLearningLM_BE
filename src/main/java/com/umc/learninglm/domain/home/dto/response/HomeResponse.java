@@ -1,15 +1,13 @@
 package com.umc.learninglm.domain.home.dto.response;
 
-import com.fasterxml.jackson.annotation.JsonSubTypes;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import java.time.LocalDateTime;
 import java.util.List;
 
 public record HomeResponse(
         boolean isGuest,
         ContinueLearningResponse continueLearning,
-        List<CategoryResponse> categories,
         List<RecommendedTutorialResponse> recommendedTutorials,
+        List<CategoryResponse> categories,
         List<PopularFlowResponse> popularFlows,
         List<RecentSavedItemResponse> recentSavedItems
 ) {
@@ -44,10 +42,9 @@ public record HomeResponse(
             String title,
             String summary,
             String difficulty,
-            CategoryResponse category,
-            List<String> tags,
+            List<CategoryResponse> categories,
             int blockCount,
-            int estimatedMinutes,
+            Integer estimatedMinutes,
             String thumbnailUrl
     ) {
     }
@@ -58,11 +55,11 @@ public record HomeResponse(
             String title,
             String summary,
             String difficulty,
-            CategoryResponse category,
+            List<CategoryResponse> categories,
             AuthorResponse author,
-            long likeCount,
-            long copyCount,
-            long commentCount
+            Long likeCount,
+            Long copyCount,
+            Long commentCount
     ) {
     }
 
@@ -73,28 +70,12 @@ public record HomeResponse(
     }
 
     // 최근 저장 항목 TUTORIAL / COPIED_FLOW 구분
-    @JsonTypeInfo(
-            use = JsonTypeInfo.Id.NAME,
-            include = JsonTypeInfo.As.EXISTING_PROPERTY,
-            property = "itemType",
-            visible = true
-    )
-    @JsonSubTypes({
-            @JsonSubTypes.Type(
-                    value = TutorialSavedItemResponse.class,
-                    name = "TUTORIAL"
-            ),
-            @JsonSubTypes.Type(
-                    value = CopiedFlowSavedItemResponse.class,
-                    name = "COPIED_FLOW"
-            )
-    })
     public sealed interface RecentSavedItemResponse
             permits TutorialSavedItemResponse, CopiedFlowSavedItemResponse {
 
         String itemType();
 
-        LocalDateTime updatedAt();
+        LocalDateTime savedAt();
     }
 
     public record TutorialSavedItemResponse(
@@ -104,15 +85,29 @@ public record HomeResponse(
             String title,
             String difficulty,
             String status,
-            int currentStepOrder,
-            int totalSteps,
-            int progressRate,
             String thumbnailUrl,
-            LocalDateTime updatedAt
+            LocalDateTime savedAt
     ) implements RecentSavedItemResponse {
 
-        public TutorialSavedItemResponse {
-            itemType = "TUTORIAL";
+        public TutorialSavedItemResponse(
+                Long tutorialId,
+                Long flowId,
+                String title,
+                String difficulty,
+                String status,
+                String thumbnailUrl,
+                LocalDateTime savedAt
+        ) {
+            this(
+                    "TUTORIAL",
+                    tutorialId,
+                    flowId,
+                    title,
+                    difficulty,
+                    status,
+                    thumbnailUrl,
+                    savedAt
+            );
         }
     }
 
@@ -122,13 +117,30 @@ public record HomeResponse(
             Long originFlowId,
             String title,
             String difficulty,
-            CategoryResponse category,
             AuthorResponse originalAuthor,
-            LocalDateTime updatedAt
+            String thumbnailUrl,
+            LocalDateTime savedAt
     ) implements RecentSavedItemResponse {
 
-        public CopiedFlowSavedItemResponse {
-            itemType = "COPIED_FLOW";
+        public CopiedFlowSavedItemResponse(
+                Long flowId,
+                Long originFlowId,
+                String title,
+                String difficulty,
+                AuthorResponse originalAuthor,
+                String thumbnailUrl,
+                LocalDateTime savedAt
+        ) {
+            this(
+                    "COPIED_FLOW",
+                    flowId,
+                    originFlowId,
+                    title,
+                    difficulty,
+                    originalAuthor,
+                    thumbnailUrl,
+                    savedAt
+            );
         }
     }
 }
