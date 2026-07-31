@@ -61,11 +61,13 @@ public enum ErrorCode {
 	TUTORIAL_INVALID_FILTER(HttpStatus.BAD_REQUEST, "TUTORIAL40002", "유효하지 않은 검색/필터 파라미터입니다."),
 	TUTORIAL_NOT_STARTED(HttpStatus.BAD_REQUEST, "TUTORIAL40003", "학습이 시작되지 않은 튜토리얼입니다."),
 	TUTORIAL_FLOW_MISMATCH(HttpStatus.BAD_REQUEST, "TUTORIAL40004", "해당 튜토리얼의 flow가 아닙니다."),
+	TUTORIAL_NOT_GUIDED_FLOW(HttpStatus.BAD_REQUEST, "TUTORIAL40005", "가이드 모드 flow가 아닙니다."),
 	TUTORIAL_NOT_FOUND(HttpStatus.NOT_FOUND, "TUTORIAL40401", "존재하지 않는 튜토리얼입니다."),
 	TUTORIAL_PROGRESS_NOT_FOUND(HttpStatus.NOT_FOUND, "TUTORIAL40402", "저장(진행) 정보가 없습니다."),
 	TUTORIAL_STEPS_NOT_FOUND(HttpStatus.NOT_FOUND, "TUTORIAL40403", "튜토리얼 단계 정보가 없습니다."),
 	TUTORIAL_ALREADY_SAVED(HttpStatus.CONFLICT, "TUTORIAL40901", "이미 저장된 튜토리얼입니다."),
 	TUTORIAL_ALREADY_STARTED(HttpStatus.CONFLICT, "TUTORIAL40902", "이미 다른 flow로 진행 중인 튜토리얼입니다."),
+	TUTORIAL_ALREADY_COMPLETED(HttpStatus.CONFLICT, "TUTORIAL40903", "이미 완료한 튜토리얼입니다."),
 
     // Home
     HOME_CATEGORY_CONFIGURATION_MISSING(HttpStatus.INTERNAL_SERVER_ERROR, "HOME50001","홈 화면 필수 카테고리 데이터가 누락되었습니다."),

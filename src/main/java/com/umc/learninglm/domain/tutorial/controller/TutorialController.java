@@ -86,7 +86,7 @@ public class TutorialController {
 	@Operation(summary = "튜토리얼 저장", description = "튜토리얼을 내 저장소에 NOT_STARTED 상태로 저장합니다(북마크 전용). 학습 시작은 /progress/start를 사용합니다.", security = @SecurityRequirement(name = "bearerAuth"))
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "튜토리얼 저장 성공"),
-			@ApiResponse(responseCode = "404", description = "TUTORIAL40401: 존재하지 않는 튜토리얼"),
+			@ApiResponse(responseCode = "404", description = "TUTORIAL40401: 존재하지 않는 튜토리얼 / AUTH40401: 사용자를 찾을 수 없음"),
 			@ApiResponse(responseCode = "409", description = "TUTORIAL40901: 이미 저장된 튜토리얼"),
 			@ApiResponse(responseCode = "401", description = "AUTH40103~AUTH40104: 인증 토큰 오류")
 	})
@@ -98,9 +98,9 @@ public class TutorialController {
 	@Operation(summary = "튜토리얼 시작", description = "가이드 모드 학습을 시작합니다. 상태를 IN_PROGRESS로 전환하고 학습용 flow를 연결합니다. POST /flows 성공 직후 호출합니다.", security = @SecurityRequirement(name = "bearerAuth"))
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "튜토리얼 시작 성공"),
-			@ApiResponse(responseCode = "400", description = "TUTORIAL40004: 해당 튜토리얼의 flow가 아님"),
-			@ApiResponse(responseCode = "404", description = "TUTORIAL40401: 존재하지 않는 튜토리얼"),
-			@ApiResponse(responseCode = "409", description = "TUTORIAL40902: 이미 다른 flow로 진행 중"),
+			@ApiResponse(responseCode = "400", description = "TUTORIAL40004: 해당 튜토리얼의 flow가 아님 / TUTORIAL40005: 가이드 모드 flow가 아님"),
+			@ApiResponse(responseCode = "404", description = "TUTORIAL40401: 존재하지 않는 튜토리얼 / AUTH40401: 사용자를 찾을 수 없음"),
+			@ApiResponse(responseCode = "409", description = "TUTORIAL40902: 이미 다른 flow로 진행 중 / TUTORIAL40903: 이미 완료한 튜토리얼"),
 			@ApiResponse(responseCode = "401", description = "AUTH40103~AUTH40104: 인증 토큰 오류")
 	})
 	public BaseResponse<TutorialProgressStartResponse> startTutorial(
@@ -114,7 +114,7 @@ public class TutorialController {
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "진행 단계 갱신 성공"),
 			@ApiResponse(responseCode = "400", description = "TUTORIAL40001: 유효하지 않은 진행 단계 값 / TUTORIAL40003: 학습이 시작되지 않음"),
-			@ApiResponse(responseCode = "404", description = "TUTORIAL40401: 존재하지 않는 튜토리얼 / TUTORIAL40402: 저장(진행) 정보 없음"),
+			@ApiResponse(responseCode = "404", description = "TUTORIAL40401: 존재하지 않는 튜토리얼 / TUTORIAL40402: 저장(진행) 정보 없음 / AUTH40401: 사용자를 찾을 수 없음"),
 			@ApiResponse(responseCode = "401", description = "AUTH40103~AUTH40104: 인증 토큰 오류")
 	})
 	public BaseResponse<TutorialProgressUpdateResponse> updateProgress(
@@ -127,7 +127,7 @@ public class TutorialController {
 	@Operation(summary = "튜토리얼 저장 해제", description = "저장한 튜토리얼을 저장 해제합니다(진행 기록 포함 삭제).", security = @SecurityRequirement(name = "bearerAuth"))
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "저장 해제 성공"),
-			@ApiResponse(responseCode = "404", description = "TUTORIAL40401: 존재하지 않는 튜토리얼 / TUTORIAL40402: 저장(진행) 정보 없음"),
+			@ApiResponse(responseCode = "404", description = "TUTORIAL40401: 존재하지 않는 튜토리얼 / TUTORIAL40402: 저장(진행) 정보 없음 / AUTH40401: 사용자를 찾을 수 없음"),
 			@ApiResponse(responseCode = "401", description = "AUTH40103~AUTH40104: 인증 토큰 오류")
 	})
 	public BaseResponse<Void> deleteProgress(@PathVariable Long tutorialId) {
