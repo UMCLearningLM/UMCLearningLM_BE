@@ -69,6 +69,10 @@ public enum ErrorCode {
 	TUTORIAL_ALREADY_STARTED(HttpStatus.CONFLICT, "TUTORIAL40902", "이미 다른 flow로 진행 중인 튜토리얼입니다."),
 	TUTORIAL_ALREADY_COMPLETED(HttpStatus.CONFLICT, "TUTORIAL40903", "이미 완료한 튜토리얼입니다.");
 
+    // Home
+    HOME_CATEGORY_CONFIGURATION_MISSING(HttpStatus.INTERNAL_SERVER_ERROR, "HOME50001","홈 화면 필수 카테고리 데이터가 누락되었습니다."),
+    HOME_CATEGORY_CODE_INVALID(HttpStatus.INTERNAL_SERVER_ERROR,"HOME50002","유효하지 않은 카테고리 데이터가 존재합니다.");
+
 	private final HttpStatus httpStatus;
 	private final String code;
 	private final String message;
