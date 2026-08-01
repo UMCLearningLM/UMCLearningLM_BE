@@ -3,6 +3,7 @@ package com.umc.learninglm.domain.library.repository;
 import java.sql.Types;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -14,6 +15,14 @@ import org.springframework.stereotype.Repository;
 public class LibraryQueryRepository {
 
     private final NamedParameterJdbcTemplate jdbcTemplate;
+
+    // LIKE 검색 특수 문자를 일반 문자로 이스케이프
+    private String escapeLikeKeyword(String keyword) {
+        return keyword
+                .replace("\\", "\\\\")
+                .replace("%", "\\%")
+                .replace("_", "\\_");
+    }
 
     // 검색 및 필터 조건에 맞는 공개 흐름 목록을 조회
     public List<FlowSummaryRow> findPublicFlows(
@@ -64,23 +73,28 @@ public class LibraryQueryRepository {
 
         if (keyword != null) {
             sql.append("""
-                  AND (
-                      LOWER(f.title) LIKE :keyword
-                      OR LOWER(COALESCE(f.summary, '')) LIKE :keyword
-                      OR EXISTS (
-                          SELECT 1
-                          FROM flow_tags ft
-                          JOIN tags t
-                            ON t.tag_id = ft.tag_id
-                          WHERE ft.flow_id = f.flow_id
-                            AND LOWER(t.name) LIKE :keyword
-                      )
-                  )
-                """);
+          AND (
+              LOWER(f.title) LIKE :keyword ESCAPE '\\\\'
+              OR LOWER(COALESCE(f.summary, '')) LIKE :keyword ESCAPE '\\\\'
+              OR EXISTS (
+                  SELECT 1
+                  FROM flow_tags ft
+                  JOIN tags t
+                    ON t.tag_id = ft.tag_id
+                  WHERE ft.flow_id = f.flow_id
+                    AND LOWER(t.name) LIKE :keyword ESCAPE '\\\\'
+              )
+          )
+        """);
+
+            String escapedKeyword =
+                    escapeLikeKeyword(
+                            keyword.toLowerCase(Locale.ROOT)
+                    );
 
             params.addValue(
                     "keyword",
-                    "%" + keyword.toLowerCase() + "%"
+                    "%" + escapedKeyword + "%"
             );
         }
 
