@@ -3,6 +3,7 @@ package com.umc.learninglm.domain.library.service;
 import com.umc.learninglm.domain.auth.entity.User;
 import com.umc.learninglm.domain.auth.repository.UserRepository;
 import com.umc.learninglm.domain.category.enums.CategoryCode;
+import com.umc.learninglm.domain.flow.enums.FlowDifficulty;
 import com.umc.learninglm.domain.library.dto.response.LibraryDetailResponse;
 import com.umc.learninglm.domain.library.dto.response.LibraryListResponse;
 import com.umc.learninglm.domain.library.repository.LibraryQueryRepository;
@@ -11,13 +12,8 @@ import com.umc.learninglm.domain.library.repository.LibraryQueryRepository.FlowD
 import com.umc.learninglm.domain.library.repository.LibraryQueryRepository.FlowSummaryRow;
 import com.umc.learninglm.global.error.CustomException;
 import com.umc.learninglm.global.error.ErrorCode;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
+
+import java.util.*;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,11 +32,10 @@ public class LibraryService {
     private static final int MAX_CATEGORY_COUNT = 3;
     private static final int MAX_DIFFICULTY_COUNT = 2;
 
-    private static final Set<String> DIFFICULTY_CODES = Set.of(
-            "BEGINNER",
-            "BASIC",
-            "ADVANCED"
-    );
+    private static final Set<String> DIFFICULTY_CODES =
+            Arrays.stream(FlowDifficulty.values())
+                    .map(Enum::name)
+                    .collect(Collectors.toUnmodifiableSet());
 
     private final LibraryQueryRepository libraryQueryRepository;
     private final UserRepository userRepository;
