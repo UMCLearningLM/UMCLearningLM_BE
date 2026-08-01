@@ -173,8 +173,8 @@ public class LibraryService {
                                 new LibraryDetailResponse.CommentResponse(
                                         row.commentId(),
                                         new LibraryDetailResponse.AuthorResponse(
-                                                flow.authorId(),
-                                                flow.authorNickname()
+                                                row.userId(),
+                                                row.nickname()
                                         ),
                                         row.content(),
                                         row.createdAt()
