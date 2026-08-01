@@ -11,6 +11,7 @@ import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -70,6 +71,19 @@ public class GlobalExceptionHandler {
 			default -> ErrorCode.REQUIRED_VALUE_MISSING;
 		};
 	}
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<BaseResponse<Void>> handleMethodArgumentTypeMismatch(
+            MethodArgumentTypeMismatchException e
+    ) {
+        ErrorCode errorCode = ErrorCode.INVALID_INPUT_VALUE;
+
+        return ResponseEntity.status(errorCode.getHttpStatus())
+                .body(BaseResponse.failure(
+                        errorCode.getCode(),
+                        errorCode.getMessage()
+                ));
+    }
 
 	@ExceptionHandler(Exception.class)
 	public ResponseEntity<BaseResponse<Void>> handleException(Exception e) {
