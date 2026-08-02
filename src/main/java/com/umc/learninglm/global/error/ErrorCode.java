@@ -77,7 +77,10 @@ public enum ErrorCode {
     LIBRARY_INVALID_FILTER(HttpStatus.BAD_REQUEST,"LIBRARY40001","잘못된 필터 값입니다."),
     LIBRARY_CATEGORY_LIMIT_EXCEEDED(HttpStatus.BAD_REQUEST,"LIBRARY40003","카테고리는 최대 3개까지 선택할 수 있습니다."),
     LIBRARY_DIFFICULTY_LIMIT_EXCEEDED(HttpStatus.BAD_REQUEST,"LIBRARY40004","난이도는 최대 2개까지 선택할 수 있습니다."),
-    LIBRARY_FLOW_NOT_FOUND(HttpStatus.NOT_FOUND, "LIBRARY40401", "공개 흐름을 찾을 수 없습니다.");
+    LIBRARY_FLOW_NOT_FOUND(HttpStatus.NOT_FOUND, "LIBRARY40401", "공개 흐름을 찾을 수 없습니다."),
+
+    // Storage
+    STORAGE_INVALID_PARAMETER(HttpStatus.BAD_REQUEST, "STORAGE40001", "유효하지 않은 조회 파라미터입니다.");
 
 	private final HttpStatus httpStatus;
 	private final String code;

@@ -2,6 +2,7 @@ package com.umc.learninglm.domain.tutorial.repository;
 
 import com.umc.learninglm.domain.home.dto.query.ContinueLearningQuery;
 import com.umc.learninglm.domain.home.dto.query.RecentTutorialQuery;
+import com.umc.learninglm.domain.storage.dto.query.SavedTutorialQuery;
 import com.umc.learninglm.domain.tutorial.entity.SavedTutorial;
 import java.util.List;
 import java.util.Optional;
@@ -17,6 +18,45 @@ public interface SavedTutorialRepository extends JpaRepository<SavedTutorial, Lo
 	Optional<SavedTutorial> findByUser_UserIdAndTutorial_TutorialId(Long userId, Long tutorialId);
 
 	List<SavedTutorial> findByUser_UserId(Long userId);
+
+	long countByUser_UserId(Long userId);
+
+    // 내 저장소의 저장한 튜토리얼 목록을 진행 정보와 함께 조회
+    @Query("""
+            select new com.umc.learninglm.domain.storage.dto.query.SavedTutorialQuery(
+                t.tutorialId,
+                f.flowId,
+                t.title,
+                t.summary,
+                cast(t.difficulty as string),
+                t.thumbnailUrl,
+                cast(st.status as string),
+                st.currentStepOrder,
+                count(distinct ts.tutorialStepId),
+                st.createdAt,
+                st.updatedAt
+            )
+            from SavedTutorial st
+            join st.tutorial t
+            left join st.flow f
+            left join TutorialStep ts
+                on ts.tutorial = t
+            where st.user.userId = :userId
+            group by
+                st.savedTutorialId,
+                t.tutorialId,
+                f.flowId,
+                t.title,
+                t.summary,
+                t.difficulty,
+                t.thumbnailUrl,
+                st.status,
+                st.currentStepOrder,
+                st.createdAt,
+                st.updatedAt
+            order by st.updatedAt desc, st.savedTutorialId desc
+            """)
+    List<SavedTutorialQuery> findSavedTutorials(@Param("userId") Long userId);
 
     // 홈 화면 사용자의 이어서 학습 튜토리얼과 최근 저장 튜토리얼을 조회
     @Query("""
