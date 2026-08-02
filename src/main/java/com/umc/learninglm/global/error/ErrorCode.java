@@ -77,7 +77,11 @@ public enum ErrorCode {
     LIBRARY_INVALID_FILTER(HttpStatus.BAD_REQUEST,"LIBRARY40001","잘못된 필터 값입니다."),
     LIBRARY_CATEGORY_LIMIT_EXCEEDED(HttpStatus.BAD_REQUEST,"LIBRARY40003","카테고리는 최대 3개까지 선택할 수 있습니다."),
     LIBRARY_DIFFICULTY_LIMIT_EXCEEDED(HttpStatus.BAD_REQUEST,"LIBRARY40004","난이도는 최대 2개까지 선택할 수 있습니다."),
-    LIBRARY_FLOW_NOT_FOUND(HttpStatus.NOT_FOUND, "LIBRARY40401", "공개 흐름을 찾을 수 없습니다.");
+    LIBRARY_FLOW_NOT_FOUND(HttpStatus.NOT_FOUND, "LIBRARY40401", "공개 흐름을 찾을 수 없습니다."),
+
+    // Block
+    BLOCK_INVALID_STAGE(HttpStatus.BAD_REQUEST,"BLOCK40001", "유효하지 않은 stage 값입니다."),
+    BLOCK_STAGE_CONFIGURATION_INVALID(HttpStatus.INTERNAL_SERVER_ERROR, "BLOCK50001", "유효하지 않은 블록 단계 데이터가 존재합니다.");
 
 	private final HttpStatus httpStatus;
 	private final String code;
