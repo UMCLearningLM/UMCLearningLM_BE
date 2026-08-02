@@ -1,9 +1,8 @@
 package com.umc.learninglm.domain.library.dto.response;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
-// 공개 활용 흐름 목록 조회 응답.
+// 공개 활용 흐름 목록 조회 응답
 public record LibraryListResponse(
         long totalElements,
         List<LibraryItemResponse> items
@@ -14,16 +13,12 @@ public record LibraryListResponse(
             String title,
             String summary,
             String difficulty,
-            CategoryResponse category,
+            List<CategoryResponse> categories,
             AuthorResponse author,
-            List<TagResponse> tags,
             long likeCount,
             long copyCount,
             long commentCount,
-            long bookmarkCount,
-            boolean isLiked,
-            boolean isBookmarked,
-            LocalDateTime createdAt
+            boolean isLiked
     ) {
     }
 
@@ -37,12 +32,6 @@ public record LibraryListResponse(
     public record AuthorResponse(
             Long userId,
             String nickname
-    ) {
-    }
-
-    public record TagResponse(
-            Long tagId,
-            String name
     ) {
     }
 }

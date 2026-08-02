@@ -2,23 +2,19 @@ package com.umc.learninglm.domain.library.dto.response;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 
-// 공개 활용 흐름 상세 조회 응답.
+// 공개 활용 흐름 상세 조회 응답
 public record LibraryDetailResponse(
         Long flowId,
         String title,
         String summary,
-        String purpose,
         String difficulty,
-        String flowType,
-        CategoryResponse category,
+        List<CategoryResponse> categories,
         AuthorResponse author,
         List<TagResponse> tags,
         List<FlowBlockResponse> blockFlow,
         String exampleInput,
         String exampleResult,
-        String exampleResultSource,
         String authorNote,
         long likeCount,
         long copyCount,
@@ -26,9 +22,7 @@ public record LibraryDetailResponse(
         long commentCount,
         boolean isLiked,
         boolean isBookmarked,
-        List<CommentResponse> comments,
-        LocalDateTime createdAt,
-        LocalDateTime updatedAt
+        List<CommentResponse> comments
 ) {
 
     public record CategoryResponse(
@@ -55,12 +49,7 @@ public record LibraryDetailResponse(
             Long blockId,
             String name,
             String stage,
-            int blockOrder,
-            Map<String, Object> options,
-            Object inputValue,
-            Object outputValue,
-            String executionMode,
-            Long promptTemplateId
+            int blockOrder
     ) {
     }
 
