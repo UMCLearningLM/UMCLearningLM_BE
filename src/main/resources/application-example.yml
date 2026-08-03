@@ -18,6 +18,11 @@ jwt:
   access-token-expiration-ms: 3600000
   refresh-token-expiration-ms: 1209600000
 
+gemini:
+  base-url: https://generativelanguage.googleapis.com
+  api-key: ${GEMINI_API_KEY}
+  model: gemini-2.0-flash
+
 springdoc:
   swagger-ui:
     path: /swagger-ui.html
