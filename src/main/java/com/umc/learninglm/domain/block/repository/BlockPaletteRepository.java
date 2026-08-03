@@ -149,6 +149,14 @@ public class BlockPaletteRepository {
         return count != null && count > 0;
     }
 
+    // LIKE 패턴 특수 문자 이스케이프
+    private String escapeLikePattern(String value) {
+        return value
+                .replace("!", "!!")
+                .replace("%", "!%")
+                .replace("_", "!_");
+    }
+
     private void appendSearchConditions(
             StringBuilder sql,
             List<Object> parameters,
@@ -164,12 +172,14 @@ public class BlockPaletteRepository {
 
         if (keyword != null) {
             String likeKeyword =
-                    "%" + keyword.toLowerCase(Locale.ROOT) + "%";
+                    "%" + escapeLikePattern(
+                            keyword.toLowerCase(Locale.ROOT)
+                    ) + "%";
 
             sql.append("""
                       AND (
-                          LOWER(b.name) LIKE ?
-                          OR LOWER(COALESCE(b.description, '')) LIKE ?
+                          LOWER(b.name) LIKE ? ESCAPE '!'
+                          OR LOWER(COALESCE(b.description, '')) LIKE ? ESCAPE '!'
                       )
                     """);
 
