@@ -6,10 +6,9 @@ import com.umc.learninglm.domain.category.enums.CategoryCode;
 import com.umc.learninglm.domain.flow.enums.FlowMode;
 import com.umc.learninglm.domain.flow.repository.FlowCategoryRepository;
 import com.umc.learninglm.domain.flow.repository.FlowRepository;
-import com.umc.learninglm.domain.home.dto.query.FlowCategoryQuery;
-import com.umc.learninglm.domain.home.dto.query.TutorialCategoryQuery;
 import com.umc.learninglm.domain.storage.dto.query.MyFlowQuery;
 import com.umc.learninglm.domain.storage.dto.query.SavedTutorialQuery;
+import com.umc.learninglm.domain.storage.dto.query.StorageCategoryQuery;
 import com.umc.learninglm.domain.storage.dto.response.StorageCategoryResponse;
 import com.umc.learninglm.domain.storage.dto.response.StorageCountsResponse;
 import com.umc.learninglm.domain.storage.dto.response.StorageFlowListResponse;
@@ -66,8 +65,9 @@ public class StorageService {
                 .toList();
 
         Map<Long, List<StorageCategoryResponse>> categoryMap =
-                groupTutorialCategories(
-                        tutorialCategoryRepository.findByTutorialIds(tutorialIds)
+                groupCategories(
+                        tutorialCategoryRepository
+                                .findStorageCategoriesByTutorialIds(tutorialIds)
                 );
 
         List<StorageTutorialResponse> tutorials = rows.stream()
@@ -120,8 +120,9 @@ public class StorageService {
                 .toList();
 
         Map<Long, List<StorageCategoryResponse>> categoryMap =
-                groupFlowCategories(
-                        flowCategoryRepository.findByFlowIds(flowIds)
+                groupCategories(
+                        flowCategoryRepository
+                                .findStorageCategoriesByFlowIds(flowIds)
                 );
 
         List<StorageFlowResponse> flows = rows.stream()
@@ -179,33 +180,16 @@ public class StorageService {
         );
     }
 
-    private Map<Long, List<StorageCategoryResponse>> groupTutorialCategories(
-            List<TutorialCategoryQuery> rows
+    // 소유자(튜토리얼 또는 흐름)별 카테고리 목록으로 묶는다
+    private Map<Long, List<StorageCategoryResponse>> groupCategories(
+            List<StorageCategoryQuery> rows
     ) {
         return rows.stream()
                 .collect(Collectors.groupingBy(
-                        TutorialCategoryQuery::tutorialId,
+                        StorageCategoryQuery::ownerId,
                         LinkedHashMap::new,
                         Collectors.mapping(
-                                row -> toCategoryResponse(
-                                        row.categoryId(), row.code()
-                                ),
-                                Collectors.toList()
-                        )
-                ));
-    }
-
-    private Map<Long, List<StorageCategoryResponse>> groupFlowCategories(
-            List<FlowCategoryQuery> rows
-    ) {
-        return rows.stream()
-                .collect(Collectors.groupingBy(
-                        FlowCategoryQuery::flowId,
-                        LinkedHashMap::new,
-                        Collectors.mapping(
-                                row -> toCategoryResponse(
-                                        row.categoryId(), row.code()
-                                ),
+                                this::toCategoryResponse,
                                 Collectors.toList()
                         )
                 ));
@@ -213,13 +197,13 @@ public class StorageService {
 
     // categories.name에 저장된 코드값을 CategoryCode로 변환해 표시명을 채운다
     private StorageCategoryResponse toCategoryResponse(
-            Long categoryId,
-            String code
+            StorageCategoryQuery row
     ) {
-        CategoryCode categoryCode = parseCategoryCode(categoryId, code);
+        CategoryCode categoryCode =
+                parseCategoryCode(row.categoryId(), row.code());
 
         return new StorageCategoryResponse(
-                categoryId,
+                row.categoryId(),
                 categoryCode.name(),
                 categoryCode.getDisplayName()
         );
