@@ -22,6 +22,10 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class FlowVerifier {
 
+	public static final String STATUS_PASS = "PASS";
+	public static final String STATUS_INSUFFICIENT = "INSUFFICIENT";
+	public static final String STATUS_PENDING = "PENDING";
+
 	private final BlockRepository blockRepository;
 	private final ObjectMapper objectMapper;
 
@@ -37,10 +41,10 @@ public class FlowVerifier {
 		FlowVerifyRuleResultResponse outputRule = coreBlockRule(3L, "결과 노드 CORE 블록", BlockType.OUTPUT, blocks, blockById);
 		FlowVerifyRuleResultResponse requiredSlotRule = requiredSlotRule(blocks, blockById);
 
-		boolean coreRulesPass = "PASS".equals(inputRule.status())
-				&& "PASS".equals(processRule.status())
-				&& "PASS".equals(outputRule.status())
-				&& "PASS".equals(requiredSlotRule.status());
+		boolean coreRulesPass = STATUS_PASS.equals(inputRule.status())
+				&& STATUS_PASS.equals(processRule.status())
+				&& STATUS_PASS.equals(outputRule.status())
+				&& STATUS_PASS.equals(requiredSlotRule.status());
 		FlowVerifyRuleResultResponse saveConditionRule = saveConditionRule(flow, coreRulesPass);
 
 		List<FlowVerifyRuleResultResponse> results = new ArrayList<>();
@@ -74,11 +78,11 @@ public class FlowVerifier {
 		String criteria = stageLabel + " 단계에 필수 블록 1개 이상이 포함되어야 합니다.";
 		if (present) {
 			return new FlowVerifyRuleResultResponse(
-					ruleId, name, "PASS", criteria,
+					ruleId, name, STATUS_PASS, criteria,
 					stageLabel + " 단계에 블록이 포함되어 있습니다.", null, stageLabel);
 		}
 		return new FlowVerifyRuleResultResponse(
-				ruleId, name, "INSUFFICIENT", criteria,
+				ruleId, name, STATUS_INSUFFICIENT, criteria,
 				stageLabel + " 단계에 블록이 없습니다.",
 				stageLabel + " 단계에 블록을 1개 이상 추가하세요.", stageLabel);
 	}
@@ -95,7 +99,7 @@ public class FlowVerifier {
 				Object value = options.get(field);
 				if (isBlankValue(value)) {
 					return new FlowVerifyRuleResultResponse(
-							4L, "필수 슬롯 채움", "INSUFFICIENT", criteria,
+							4L, "필수 슬롯 채움", STATUS_INSUFFICIENT, criteria,
 							"\"" + block.getName() + "\" 노드의 \"" + field + "\" 값이 비어 있습니다.",
 							block.getName() + " 노드의 " + field + "을(를) 채워주세요.",
 							block.getBlockType().name());
@@ -103,7 +107,7 @@ public class FlowVerifier {
 			}
 		}
 		return new FlowVerifyRuleResultResponse(
-				4L, "필수 슬롯 채움", "PASS", criteria,
+				4L, "필수 슬롯 채움", STATUS_PASS, criteria,
 				"모든 블록의 필수 옵션이 채워져 있습니다.", null, null);
 	}
 
@@ -112,10 +116,10 @@ public class FlowVerifier {
 		boolean hasTitle = flow.getTitle() != null && !flow.getTitle().isBlank();
 		if (hasTitle && coreRulesPass) {
 			return new FlowVerifyRuleResultResponse(
-					5L, "저장 조건", "PASS", criteria, "저장 가능한 상태입니다.", null, null);
+					5L, "저장 조건", STATUS_PASS, criteria, "저장 가능한 상태입니다.", null, null);
 		}
 		return new FlowVerifyRuleResultResponse(
-				5L, "저장 조건", "PENDING", criteria,
+				5L, "저장 조건", STATUS_PENDING, criteria,
 				"아직 저장 조건을 모두 충족하지 못했습니다.",
 				"제목과 필수 블록, 필수 옵션을 모두 채운 뒤 저장하세요.", null);
 	}
@@ -123,19 +127,19 @@ public class FlowVerifier {
 	private List<FlowVerifyRuleResultResponse> pendingResultsForEmptyBlocks() {
 		List<FlowVerifyRuleResultResponse> results = new ArrayList<>();
 		results.add(new FlowVerifyRuleResultResponse(
-				1L, "입력 노드 CORE 블록", "PENDING", "입력 단계에 필수 블록 1개 이상이 포함되어야 합니다.",
+				1L, "입력 노드 CORE 블록", STATUS_PENDING, "입력 단계에 필수 블록 1개 이상이 포함되어야 합니다.",
 				"배치된 블록이 없습니다.", null, "INPUT"));
 		results.add(new FlowVerifyRuleResultResponse(
-				2L, "프로세스 노드 CORE 블록", "PENDING", "프로세스 단계에 필수 블록 1개 이상이 포함되어야 합니다.",
+				2L, "프로세스 노드 CORE 블록", STATUS_PENDING, "프로세스 단계에 필수 블록 1개 이상이 포함되어야 합니다.",
 				"배치된 블록이 없습니다.", null, "PROCESS"));
 		results.add(new FlowVerifyRuleResultResponse(
-				3L, "결과 노드 CORE 블록", "PENDING", "결과 단계에 필수 블록 1개 이상이 포함되어야 합니다.",
+				3L, "결과 노드 CORE 블록", STATUS_PENDING, "결과 단계에 필수 블록 1개 이상이 포함되어야 합니다.",
 				"배치된 블록이 없습니다.", null, "OUTPUT"));
 		results.add(new FlowVerifyRuleResultResponse(
-				4L, "필수 슬롯 채움", "PENDING", "각 블록의 필수 옵션이 모두 채워져야 합니다.",
+				4L, "필수 슬롯 채움", STATUS_PENDING, "각 블록의 필수 옵션이 모두 채워져야 합니다.",
 				"배치된 블록이 없습니다.", null, null));
 		results.add(new FlowVerifyRuleResultResponse(
-				5L, "저장 조건", "PENDING", "제목과 블록이 있어야 하며 위 검수 항목이 모두 통과해야 저장할 수 있습니다.",
+				5L, "저장 조건", STATUS_PENDING, "제목과 블록이 있어야 하며 위 검수 항목이 모두 통과해야 저장할 수 있습니다.",
 				"배치된 블록이 없습니다.", null, null));
 		return results;
 	}

@@ -1,10 +1,14 @@
 package com.umc.learninglm.domain.flow.client;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.http.client.ClientHttpRequestFactoryBuilder;
+import org.springframework.boot.http.client.ClientHttpRequestFactorySettings;
 import org.springframework.http.MediaType;
+import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
@@ -18,8 +22,14 @@ public class GeminiClient {
 	public GeminiClient(
 			@Value("${gemini.base-url:https://generativelanguage.googleapis.com}") String baseUrl,
 			@Value("${gemini.api-key:}") String apiKey,
-			@Value("${gemini.model:gemini-2.0-flash}") String model) {
-		this.restClient = RestClient.create(baseUrl);
+			@Value("${gemini.model:gemini-2.0-flash}") String model,
+			@Value("${gemini.connect-timeout-ms:3000}") long connectTimeoutMs,
+			@Value("${gemini.read-timeout-ms:20000}") long readTimeoutMs) {
+		ClientHttpRequestFactorySettings settings = ClientHttpRequestFactorySettings.defaults()
+				.withConnectTimeout(Duration.ofMillis(connectTimeoutMs))
+				.withReadTimeout(Duration.ofMillis(readTimeoutMs));
+		ClientHttpRequestFactory requestFactory = ClientHttpRequestFactoryBuilder.detect().build(settings);
+		this.restClient = RestClient.builder().baseUrl(baseUrl).requestFactory(requestFactory).build();
 		this.apiKey = apiKey;
 		this.model = model;
 	}
@@ -38,7 +48,8 @@ public class GeminiClient {
 				"contents", List.of(Map.of("parts", List.of(Map.of("text", prompt)))));
 
 		GeminiResponse response = restClient.post()
-				.uri("/v1beta/models/{model}:generateContent?key={key}", model, apiKey)
+				.uri("/v1beta/models/{model}:generateContent", model)
+				.header("x-goog-api-key", apiKey)
 				.contentType(MediaType.APPLICATION_JSON)
 				.body(body)
 				.retrieve()

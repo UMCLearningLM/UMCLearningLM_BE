@@ -3,6 +3,7 @@ package com.umc.learninglm.domain.flow.dto.request;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 
 import java.util.List;
@@ -23,8 +24,8 @@ public record FlowUpdateRequest(
 		String difficulty,
 
 		@Schema(description = "카테고리 식별자 목록")
-		@NotNull(message = "카테고리 식별자 목록은 필수입니다.")
-		List<Long> categoryIds,
+		@NotEmpty(message = "카테고리 식별자 목록은 최소 1개 필요합니다.")
+		List<@NotNull Long> categoryIds,
 
 		@Schema(description = "공개 범위", example = "PRIVATE", allowableValues = {"PRIVATE", "PUBLIC"})
 		@NotBlank(message = "공개 범위는 필수입니다.")

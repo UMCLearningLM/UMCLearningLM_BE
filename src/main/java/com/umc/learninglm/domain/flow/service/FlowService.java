@@ -30,6 +30,7 @@ import com.umc.learninglm.domain.flow.enums.FlowDifficulty;
 import com.umc.learninglm.domain.flow.enums.FlowMode;
 import com.umc.learninglm.domain.flow.enums.FlowStatus;
 import com.umc.learninglm.domain.flow.enums.FlowVisibility;
+import com.umc.learninglm.domain.flow.repository.AiExecutionLogRepository;
 import com.umc.learninglm.domain.flow.repository.FlowBlockRepository;
 import com.umc.learninglm.domain.flow.repository.FlowBookmarkRepository;
 import com.umc.learninglm.domain.flow.repository.FlowCategoryRepository;
@@ -53,6 +54,9 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class FlowService {
 
+	private static final String TOTAL_STATUS_PASS = "PASS";
+	private static final String TOTAL_STATUS_FAIL = "FAIL";
+
 	private final FlowRepository flowRepository;
 	private final FlowBlockRepository flowBlockRepository;
 	private final FlowCategoryRepository flowCategoryRepository;
@@ -60,6 +64,7 @@ public class FlowService {
 	private final FlowCommentRepository flowCommentRepository;
 	private final FlowBookmarkRepository flowBookmarkRepository;
 	private final FlowTagRepository flowTagRepository;
+	private final AiExecutionLogRepository aiExecutionLogRepository;
 	private final BlockRepository blockRepository;
 	private final PromptTemplateRepository promptTemplateRepository;
 	private final CategoryRepository categoryRepository;
@@ -82,6 +87,9 @@ public class FlowService {
 				? null
 				: flowRepository.findById(request.originFlowId())
 						.orElseThrow(() -> new CustomException(ErrorCode.FLOW_ORIGIN_NOT_FOUND));
+		if (originFlow != null && originFlow.getVisibility() != FlowVisibility.PUBLIC) {
+			flowAccessGuard.requireOwner(originFlow, user);
+		}
 
 		Flow flow = Flow.create(user, tutorial, originFlow, mode);
 		flow = flowRepository.saveAndFlush(flow);
@@ -176,6 +184,7 @@ public class FlowService {
 		flowTagRepository.deleteByFlow_FlowId(flowId);
 		flowCategoryRepository.deleteByFlow_FlowId(flowId);
 		flowBlockRepository.deleteByFlow_FlowId(flowId);
+		aiExecutionLogRepository.deleteByFlow_FlowId(flowId);
 		flowRepository.delete(flow);
 
 		return new FlowDeleteResponse(flowId, true);
@@ -189,8 +198,8 @@ public class FlowService {
 		List<FlowVerifyRuleResultResponse> results = flowVerifier.verify(flow, request.blocks());
 
 		FlowVerifySummaryResponse summary = summarize(results);
-		boolean allPass = results.stream().allMatch(r -> "PASS".equals(r.status()));
-		String totalStatus = allPass ? "PASS" : "FAIL";
+		boolean allPass = results.stream().allMatch(r -> FlowVerifier.STATUS_PASS.equals(r.status()));
+		String totalStatus = allPass ? TOTAL_STATUS_PASS : TOTAL_STATUS_FAIL;
 
 		return new FlowVerifyResponse(totalStatus, summary, results);
 	}
@@ -209,8 +218,12 @@ public class FlowService {
 
 	private void replaceCategories(Flow flow, List<Long> categoryIds) {
 		flowCategoryRepository.deleteByFlow_FlowId(flow.getFlowId());
-		List<Category> categories = categoryRepository.findAllById(categoryIds);
-		if (categories.size() != categoryIds.size()) {
+		if (categoryIds == null || categoryIds.isEmpty()) {
+			return;
+		}
+		List<Long> distinctIds = categoryIds.stream().distinct().toList();
+		List<Category> categories = categoryRepository.findAllById(distinctIds);
+		if (categories.size() != distinctIds.size()) {
 			throw new CustomException(ErrorCode.FLOW_INVALID_REQUEST);
 		}
 		for (Category category : categories) {
@@ -220,12 +233,17 @@ public class FlowService {
 
 	private void replaceBlocks(Flow flow, List<FlowBlockRequest> blockRequests) {
 		flowBlockRepository.deleteByFlow_FlowId(flow.getFlowId());
+		if (blockRequests == null) {
+			return;
+		}
 		for (FlowBlockRequest blockRequest : blockRequests) {
 			Block block = blockRepository.findById(blockRequest.blockId())
 					.orElseThrow(() -> new CustomException(ErrorCode.FLOW_BLOCK_NOT_FOUND));
-			PromptTemplate promptTemplate = blockRequest.promptTemplateId() == null
-					? null
-					: promptTemplateRepository.findById(blockRequest.promptTemplateId()).orElse(null);
+			PromptTemplate promptTemplate = null;
+			if (blockRequest.promptTemplateId() != null) {
+				promptTemplate = promptTemplateRepository.findById(blockRequest.promptTemplateId())
+						.orElseThrow(() -> new CustomException(ErrorCode.FLOW_INVALID_REQUEST));
+			}
 			String options = writeOptions(blockRequest.options());
 
 			flowBlockRepository.save(FlowBlock.create(
@@ -278,11 +296,12 @@ public class FlowService {
 		int insufficient = 0;
 		int pending = 0;
 		for (FlowVerifyRuleResultResponse result : results) {
-			switch (result.status()) {
-				case "PASS" -> pass++;
-				case "INSUFFICIENT" -> insufficient++;
-				case "PENDING" -> pending++;
-				default -> { }
+			if (FlowVerifier.STATUS_PASS.equals(result.status())) {
+				pass++;
+			} else if (FlowVerifier.STATUS_INSUFFICIENT.equals(result.status())) {
+				insufficient++;
+			} else if (FlowVerifier.STATUS_PENDING.equals(result.status())) {
+				pending++;
 			}
 		}
 		return new FlowVerifySummaryResponse(pass, insufficient, pending);

@@ -19,7 +19,7 @@ import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestClientException;
 
 @Slf4j
 @Service
@@ -39,7 +39,8 @@ public class FlowPreviewService {
 	private final ObjectMapper objectMapper;
 	private final FlowAccessGuard flowAccessGuard;
 
-	@Transactional
+	// Gemini 호출을 DB 트랜잭션 밖에서 동기 실행하기 위해 메서드 레벨 @Transactional을 두지 않는다.
+	// currentUser/requireFlow 조회와 logExecution의 save는 각 Repository 메서드 자체가 트랜잭션을 관리한다.
 	public FlowPreviewResponse previewFlow(Long flowId, FlowPreviewRequest request) {
 		User user = flowAccessGuard.currentUser();
 		Flow flow = flowAccessGuard.requireFlow(flowId);
@@ -51,7 +52,7 @@ public class FlowPreviewService {
 			String resultText = geminiClient.generateContent(prompt);
 			logExecution(user, flow, geminiClient.getModel(), STATUS_SUCCESS, prompt, resultText, null);
 			return new FlowPreviewResponse(resultText, RESULT_SOURCE_AI, geminiClient.getModel());
-		} catch (Exception e) {
+		} catch (RestClientException | IllegalStateException e) {
 			log.warn("Gemini 호출 실패, TEMPLATE Fallback으로 전환합니다. flowId={}", flowId, e);
 			logExecution(user, flow, geminiClient.getModel(), STATUS_FAILED, prompt, null, e.getMessage());
 			String fallbackText = buildTemplateFallback(request.blocks());

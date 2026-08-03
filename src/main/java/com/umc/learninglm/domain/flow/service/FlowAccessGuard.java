@@ -7,6 +7,7 @@ import com.umc.learninglm.domain.flow.repository.FlowRepository;
 import com.umc.learninglm.global.error.CustomException;
 import com.umc.learninglm.global.error.ErrorCode;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -21,7 +22,9 @@ public class FlowAccessGuard {
 	// JWT 필터가 principal에 email을 넣음(auth 도메인 컨벤션) → email로 사용자 조회.
 	public User currentUser() {
 		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-		if (authentication == null || !authentication.isAuthenticated()) {
+		if (authentication == null
+				|| !authentication.isAuthenticated()
+				|| authentication instanceof AnonymousAuthenticationToken) {
 			throw new CustomException(ErrorCode.ACCESS_TOKEN_MISSING);
 		}
 		String email = authentication.getName();
