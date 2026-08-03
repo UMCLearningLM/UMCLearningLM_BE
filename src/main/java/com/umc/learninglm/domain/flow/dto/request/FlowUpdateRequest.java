@@ -22,9 +22,9 @@ public record FlowUpdateRequest(
 		@Schema(description = "난이도 코드", example = "BASIC", allowableValues = {"BEGINNER", "BASIC", "ADVANCED"}, nullable = true)
 		String difficulty,
 
-		@Schema(example = "1")
-		@NotNull(message = "카테고리 식별자는 필수입니다.")
-		Long categoryId,
+		@Schema(description = "카테고리 식별자 목록")
+		@NotNull(message = "카테고리 식별자 목록은 필수입니다.")
+		List<Long> categoryIds,
 
 		@Schema(description = "공개 범위", example = "PRIVATE", allowableValues = {"PRIVATE", "PUBLIC"})
 		@NotBlank(message = "공개 범위는 필수입니다.")
@@ -42,14 +42,6 @@ public record FlowUpdateRequest(
 
 		@Schema(example = "비교 표 예시", nullable = true)
 		String exampleResult,
-
-		@Schema(description = "흐름 유형", example = "USER")
-		@NotBlank(message = "흐름 유형은 필수입니다.")
-		String flowType,
-
-		@Schema(description = "생성 모드", example = "GUIDED", allowableValues = {"GUIDED", "CREATE"})
-		@NotBlank(message = "모드는 필수입니다.")
-		String mode,
 
 		@Schema(description = "블록 배치 목록 (전체 교체)")
 		@NotNull(message = "블록 배치 목록은 필수입니다.")
