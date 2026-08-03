@@ -61,4 +61,20 @@ public class FlowBlock extends BaseTimeEntity {
 	@Column(name = "execution_mode", nullable = false, length = 30)
 	@ColumnDefault("'PRESET'")
 	private ExecutionMode executionMode = ExecutionMode.PRESET;
+
+	public static FlowBlock create(
+			Flow flow,
+			Block block,
+			PromptTemplate promptTemplate,
+			Integer blockOrder,
+			String options) {
+		FlowBlock flowBlock = new FlowBlock();
+		flowBlock.flow = flow;
+		flowBlock.block = block;
+		flowBlock.promptTemplate = promptTemplate;
+		flowBlock.blockOrder = blockOrder;
+		flowBlock.options = options;
+		flowBlock.executionMode = ExecutionMode.USER;
+		return flowBlock;
+	}
 }

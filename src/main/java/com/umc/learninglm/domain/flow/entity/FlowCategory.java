@@ -32,4 +32,11 @@ public class FlowCategory {
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "category_id", nullable = false)
 	private Category category;
+
+	public static FlowCategory create(Flow flow, Category category) {
+		FlowCategory flowCategory = new FlowCategory();
+		flowCategory.flow = flow;
+		flowCategory.category = category;
+		return flowCategory;
+	}
 }

@@ -74,4 +74,29 @@ public class AiExecutionLog {
 	@CreatedDate
 	@Column(name = "created_at", nullable = false, updatable = false)
 	private LocalDateTime createdAt;
+
+	public static AiExecutionLog create(
+			User user,
+			Flow flow,
+			String provider,
+			String modelName,
+			String requestType,
+			String status,
+			String errorMessage,
+			String inputSnapshot,
+			String outputSnapshot,
+			Integer tokenUsage) {
+		AiExecutionLog log = new AiExecutionLog();
+		log.user = user;
+		log.flow = flow;
+		log.provider = provider;
+		log.modelName = modelName;
+		log.requestType = requestType;
+		log.status = status;
+		log.errorMessage = errorMessage;
+		log.inputSnapshot = inputSnapshot;
+		log.outputSnapshot = outputSnapshot;
+		log.tokenUsage = tokenUsage;
+		return log;
+	}
 }
