@@ -3,7 +3,7 @@ package com.umc.learninglm.domain.block.service;
 import com.umc.learninglm.domain.block.dto.response.BlockListResponse;
 import com.umc.learninglm.domain.block.dto.response.BlockListResponse.BlockResponse;
 import com.umc.learninglm.domain.block.dto.response.BlockListResponse.StageResponse;
-import com.umc.learninglm.domain.block.enums.BlockStage;
+import com.umc.learninglm.domain.block.enums.BlockType;
 import com.umc.learninglm.domain.block.repository.BlockPaletteRepository;
 import com.umc.learninglm.domain.block.repository.BlockPaletteView;
 import com.umc.learninglm.global.error.CustomException;
@@ -40,7 +40,7 @@ public class BlockService {
         String keyword = normalizeKeyword(q);
 
         // stage 값을 enum으로 검증 및 변환
-        BlockStage blockStage = parseStage(stage);
+        BlockType blockStage = parseStage(stage);
 
         // tutorialId가 있으면 공개 튜토리얼인지 확인
         if (tutorialId != null) {
@@ -77,8 +77,7 @@ public class BlockService {
         }
     }
 
-    private BlockStage parseStage(String stage) {
-        // stage 미입력 시 전체 단계 조회
+    private BlockType parseStage(String stage) {
         if (stage == null) {
             return null;
         }
@@ -90,7 +89,7 @@ public class BlockService {
         }
 
         try {
-            return BlockStage.valueOf(
+            return BlockType.valueOf(
                     normalizedStage.toUpperCase(Locale.ROOT)
             );
         } catch (IllegalArgumentException exception) {
@@ -111,23 +110,23 @@ public class BlockService {
                 : normalizedKeyword;
     }
 
-    private String toStageValue(BlockStage blockStage) {
-        return blockStage == null
+    private String toStageValue(BlockType blockType) {
+        return blockType == null
                 ? null
-                : blockStage.name();
+                : blockType.name();
     }
 
     private List<StageResponse> groupByStage(
             List<BlockPaletteView> blockViews
     ) {
-        Map<BlockStage, List<BlockResponse>> groupedBlocks =
-                new EnumMap<>(BlockStage.class);
+        Map<BlockType, List<BlockResponse>> groupedBlocks =
+                new EnumMap<>(BlockType.class);
 
         for (BlockPaletteView view : blockViews) {
-            BlockStage stage;
+            BlockType stage;
 
             try {
-                stage = BlockStage.valueOf(view.stage());
+                stage = BlockType.valueOf(view.stage());
             } catch (IllegalArgumentException exception) {
                 throw new CustomException(
                         ErrorCode.BLOCK_STAGE_CONFIGURATION_INVALID
@@ -143,7 +142,7 @@ public class BlockService {
         }
 
         // enum 선언 순서대로 stage 응답 생성
-        return Arrays.stream(BlockStage.values())
+        return Arrays.stream(BlockType.values())
                 .filter(groupedBlocks::containsKey)
                 .map(stage -> new StageResponse(
                         stage.name(),
