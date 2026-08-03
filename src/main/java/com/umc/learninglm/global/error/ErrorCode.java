@@ -77,7 +77,15 @@ public enum ErrorCode {
     LIBRARY_INVALID_FILTER(HttpStatus.BAD_REQUEST,"LIBRARY40001","잘못된 필터 값입니다."),
     LIBRARY_CATEGORY_LIMIT_EXCEEDED(HttpStatus.BAD_REQUEST,"LIBRARY40003","카테고리는 최대 3개까지 선택할 수 있습니다."),
     LIBRARY_DIFFICULTY_LIMIT_EXCEEDED(HttpStatus.BAD_REQUEST,"LIBRARY40004","난이도는 최대 2개까지 선택할 수 있습니다."),
-    LIBRARY_FLOW_NOT_FOUND(HttpStatus.NOT_FOUND, "LIBRARY40401", "공개 흐름을 찾을 수 없습니다.");
+    LIBRARY_FLOW_NOT_FOUND(HttpStatus.NOT_FOUND, "LIBRARY40401", "공개 흐름을 찾을 수 없습니다."),
+
+    // Flow
+    FLOW_INVALID_REQUEST(HttpStatus.BAD_REQUEST, "FLOW40001", "잘못된 요청입니다."),
+    FLOW_OPTIONS_PARSE_FAILED(HttpStatus.BAD_REQUEST, "FLOW40003", "블록 옵션을 파싱할 수 없습니다."),
+    FLOW_OWNER_MISMATCH(HttpStatus.FORBIDDEN, "FLOW40301", "흐름 소유자가 아닙니다."),
+    FLOW_NOT_FOUND(HttpStatus.NOT_FOUND, "FLOW40401", "존재하지 않는 흐름입니다."),
+    FLOW_BLOCK_NOT_FOUND(HttpStatus.NOT_FOUND, "FLOW40402", "존재하지 않는 블록입니다."),
+    FLOW_ORIGIN_NOT_FOUND(HttpStatus.NOT_FOUND, "FLOW40403", "복사할 원본 흐름을 찾을 수 없습니다.");
 
 	private final HttpStatus httpStatus;
 	private final String code;
