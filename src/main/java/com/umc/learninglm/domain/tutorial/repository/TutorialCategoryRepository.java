@@ -1,6 +1,7 @@
 package com.umc.learninglm.domain.tutorial.repository;
 
 import com.umc.learninglm.domain.home.dto.query.TutorialCategoryQuery;
+import com.umc.learninglm.domain.storage.dto.query.StorageCategoryQuery;
 import com.umc.learninglm.domain.tutorial.entity.TutorialCategory;
 
 import java.util.Collection;
@@ -33,6 +34,25 @@ public interface TutorialCategoryRepository extends JpaRepository<TutorialCatego
                 c.categoryId asc
             """)
     List<TutorialCategoryQuery> findByTutorialIds(
+            @Param("tutorialIds") Collection<Long> tutorialIds
+    );
+
+    // 내 저장소의 저장한 튜토리얼에 연결된 카테고리를 일괄 조회
+    @Query("""
+            select new com.umc.learninglm.domain.storage.dto.query.StorageCategoryQuery(
+                tc.tutorial.tutorialId,
+                c.categoryId,
+                c.name
+            )
+            from TutorialCategory tc
+            join tc.category c
+            where tc.tutorial.tutorialId in :tutorialIds
+            order by
+                tc.tutorial.tutorialId asc,
+                c.sortOrder asc,
+                c.categoryId asc
+            """)
+    List<StorageCategoryQuery> findStorageCategoriesByTutorialIds(
             @Param("tutorialIds") Collection<Long> tutorialIds
     );
 }
