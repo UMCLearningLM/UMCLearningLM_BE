@@ -1,16 +1,7 @@
 package com.umc.learninglm.domain.flow.entity;
 
 import com.umc.learninglm.domain.auth.entity.User;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EntityListeners;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -21,7 +12,15 @@ import java.time.LocalDateTime;
 
 @Getter
 @Entity
-@Table(name = "flow_bookmarks")
+@Table(
+        name = "flow_bookmarks",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uq_flow_bookmark",
+                        columnNames = {"user_id", "flow_id"}
+                )
+        }
+)
 @EntityListeners(AuditingEntityListener.class)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class FlowBookmark {
