@@ -56,7 +56,7 @@ public class TutorialProgressService {
 				tutorialId,
 				saved.getCurrentStepOrder(),
 				totalSteps,
-				progressRate(saved.getStatus(), saved.getCurrentStepOrder(), totalSteps),
+				TutorialProgressCalculator.progressRate(saved.getStatus(), saved.getCurrentStepOrder(), totalSteps),
 				saved.getStatus().name(),
 				saved.getCreatedAt());
 	}
@@ -102,7 +102,7 @@ public class TutorialProgressService {
 				tutorialId,
 				saved.getCurrentStepOrder(),
 				totalSteps,
-				progressRate(saved.getStatus(), saved.getCurrentStepOrder(), totalSteps),
+				TutorialProgressCalculator.progressRate(saved.getStatus(), saved.getCurrentStepOrder(), totalSteps),
 				saved.getStatus().name(),
 				saved.getFlow().getFlowId(),
 				saved.getUpdatedAt());
@@ -143,7 +143,7 @@ public class TutorialProgressService {
 				tutorialId,
 				saved.getCurrentStepOrder(),
 				totalSteps,
-				progressRate(saved.getStatus(), saved.getCurrentStepOrder(), totalSteps),
+				TutorialProgressCalculator.progressRate(saved.getStatus(), saved.getCurrentStepOrder(), totalSteps),
 				saved.getStatus().name(),
 				saved.getUpdatedAt());
 	}
@@ -169,17 +169,6 @@ public class TutorialProgressService {
 
 	private int totalSteps(Long tutorialId) {
 		return (int) tutorialStepRepository.countByTutorial_TutorialId(tutorialId);
-	}
-
-	// progressRate: COMPLETED면 100, 그 외 round((currentStepOrder - 1) / totalSteps * 100)
-	private int progressRate(SavedTutorialStatus status, int currentStepOrder, int totalSteps) {
-		if (status == SavedTutorialStatus.COMPLETED) {
-			return 100;
-		}
-		if (totalSteps <= 0) {
-			return 0;
-		}
-		return (int) Math.round((currentStepOrder - 1) * 100.0 / totalSteps);
 	}
 
 	// JWT 필터가 principal에 email을 넣음(auth 도메인 컨벤션) → email로 사용자 조회.

@@ -17,6 +17,7 @@ import com.umc.learninglm.domain.storage.dto.response.StorageTutorialListRespons
 import com.umc.learninglm.domain.storage.dto.response.StorageTutorialResponse;
 import com.umc.learninglm.domain.tutorial.enums.SavedTutorialStatus;
 import com.umc.learninglm.domain.tutorial.repository.SavedTutorialRepository;
+import com.umc.learninglm.domain.tutorial.service.TutorialProgressCalculator;
 import com.umc.learninglm.domain.tutorial.repository.TutorialCategoryRepository;
 import com.umc.learninglm.global.error.CustomException;
 import com.umc.learninglm.global.error.ErrorCode;
@@ -82,8 +83,8 @@ public class StorageService {
                         row.status(),
                         row.currentStepOrder(),
                         row.totalSteps().intValue(),
-                        progressRate(
-                                row.status(),
+                        TutorialProgressCalculator.progressRate(
+                                SavedTutorialStatus.valueOf(row.status()),
                                 row.currentStepOrder(),
                                 row.totalSteps().intValue()
                         ),
@@ -222,25 +223,6 @@ public class StorageService {
 
             throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR);
         }
-    }
-
-    // 진행률 계산 — TutorialProgressService와 동일한 기준을 사용한다.
-    // COMPLETED면 100, 그 외 round((currentStepOrder - 1) / totalSteps * 100)
-    private int progressRate(
-            String status,
-            int currentStepOrder,
-            int totalSteps
-    ) {
-        if (SavedTutorialStatus.COMPLETED.name().equals(status)) {
-            return 100;
-        }
-        if (totalSteps <= 0) {
-            return 0;
-        }
-
-        return (int) Math.round(
-                (currentStepOrder - 1) * 100.0 / totalSteps
-        );
     }
 
     // JWT 필터가 principal에 email을 넣으므로 email로 사용자를 조회한다.
