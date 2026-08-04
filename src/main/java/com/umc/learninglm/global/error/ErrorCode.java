@@ -80,7 +80,11 @@ public enum ErrorCode {
     LIBRARY_FLOW_NOT_FOUND(HttpStatus.NOT_FOUND, "LIBRARY40401", "공개 흐름을 찾을 수 없습니다."),
 
     // Storage
-    STORAGE_INVALID_PARAMETER(HttpStatus.BAD_REQUEST, "STORAGE40001", "유효하지 않은 조회 파라미터입니다.");
+    STORAGE_INVALID_PARAMETER(HttpStatus.BAD_REQUEST, "STORAGE40001", "유효하지 않은 조회 파라미터입니다."),
+  
+    // Block
+    BLOCK_INVALID_STAGE(HttpStatus.BAD_REQUEST,"BLOCK40001", "유효하지 않은 stage 값입니다."),
+    BLOCK_STAGE_CONFIGURATION_INVALID(HttpStatus.INTERNAL_SERVER_ERROR, "BLOCK50001", "유효하지 않은 블록 단계 데이터가 존재합니다.");
 
 	private final HttpStatus httpStatus;
 	private final String code;
