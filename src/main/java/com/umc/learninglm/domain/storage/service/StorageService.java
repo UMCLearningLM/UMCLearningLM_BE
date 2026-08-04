@@ -169,7 +169,7 @@ public class StorageService {
 
     private StorageCountsResponse loadCounts(Long userId) {
         return new StorageCountsResponse(
-                (int) savedTutorialRepository.countByUser_UserId(userId),
+                (int) savedTutorialRepository.countPublishedByUserId(userId),
                 (int) flowRepository
                         .countByUser_UserIdAndModeAndOriginFlowIsNull(
                                 userId, FlowMode.CREATE
