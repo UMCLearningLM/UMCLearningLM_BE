@@ -45,7 +45,8 @@ CREATE TABLE `categories` (
     `name` VARCHAR(100) NOT NULL COMMENT 'COMMUNITY / RESEARCH / TUTORIAL / DOCUMENT_SUMMARY / SUMMARY / WRITING / REVIEW / AI_TOOL / ROUTINE',
     `description` TEXT NULL,
     `sort_order` INT NOT NULL,
-    CONSTRAINT `pk_categories` PRIMARY KEY (`category_id`)
+    CONSTRAINT `pk_categories` PRIMARY KEY (`category_id`),
+    CONSTRAINT `uk_categories_name` UNIQUE (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `blocks` (
@@ -66,7 +67,8 @@ CREATE TABLE `blocks` (
 CREATE TABLE `tags` (
     `tag_id` BIGINT NOT NULL AUTO_INCREMENT,
     `name` VARCHAR(50) NOT NULL,
-    CONSTRAINT `pk_tags` PRIMARY KEY (`tag_id`)
+    CONSTRAINT `pk_tags` PRIMARY KEY (`tag_id`),
+    CONSTRAINT `uk_tags_name` UNIQUE (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- tutorials와 flows는 서로 선택 참조하므로 FK는 전체 테이블 생성 후 추가합니다.
@@ -161,6 +163,7 @@ CREATE TABLE `flow_categories` (
     `flow_id` BIGINT NOT NULL,
     `category_id` BIGINT NOT NULL,
     CONSTRAINT `pk_flow_categories` PRIMARY KEY (`flow_category_id`),
+    CONSTRAINT `uq_flow_category` UNIQUE (`flow_id`, `category_id`),
     INDEX `idx_flow_categories_flow_id` (`flow_id`),
     INDEX `idx_flow_categories_category_id` (`category_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -199,6 +202,7 @@ CREATE TABLE `flow_bookmarks` (
     `flow_id` BIGINT NOT NULL,
     `created_at` DATETIME(6) NOT NULL,
     CONSTRAINT `pk_flow_bookmarks` PRIMARY KEY (`flow_bookmark_id`),
+    CONSTRAINT `uq_flow_bookmark` UNIQUE (`user_id`, `flow_id`),
     INDEX `idx_flow_bookmarks_user_id` (`user_id`),
     INDEX `idx_flow_bookmarks_flow_id` (`flow_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -219,6 +223,7 @@ CREATE TABLE `saved_flows` (
     `created_at` DATETIME(6) NOT NULL,
     `updated_at` DATETIME(6) NOT NULL,
     CONSTRAINT `pk_saved_flows` PRIMARY KEY (`saved_flow_id`),
+    CONSTRAINT `uq_saved_flow` UNIQUE (`user_id`, `flow_id`),
     INDEX `idx_saved_flows_user_id` (`user_id`),
     INDEX `idx_saved_flows_flow_id` (`flow_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -229,6 +234,7 @@ CREATE TABLE `flow_likes` (
     `flow_id` BIGINT NOT NULL,
     `created_at` DATETIME(6) NOT NULL,
     CONSTRAINT `pk_flow_likes` PRIMARY KEY (`flow_like_id`),
+    CONSTRAINT `uq_flow_like` UNIQUE (`user_id`, `flow_id`),
     INDEX `idx_flow_likes_user_id` (`user_id`),
     INDEX `idx_flow_likes_flow_id` (`flow_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

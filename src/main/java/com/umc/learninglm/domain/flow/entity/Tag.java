@@ -1,18 +1,21 @@
 package com.umc.learninglm.domain.flow.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Getter
 @Entity
-@Table(name = "tags")
+@Table(
+        name = "tags",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_tags_name",
+                        columnNames = "name"
+                )
+        }
+)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Tag {
 
