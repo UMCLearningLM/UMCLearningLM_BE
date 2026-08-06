@@ -81,7 +81,12 @@ public enum ErrorCode {
 
     // Block
     BLOCK_INVALID_STAGE(HttpStatus.BAD_REQUEST,"BLOCK40001", "유효하지 않은 stage 값입니다."),
-    BLOCK_STAGE_CONFIGURATION_INVALID(HttpStatus.INTERNAL_SERVER_ERROR, "BLOCK50001", "유효하지 않은 블록 단계 데이터가 존재합니다.");
+    BLOCK_PROMPT_VARIABLE_MISSING(HttpStatus.BAD_REQUEST, "BLOCK40002", "프롬프트 변수에 대응하는 값이 없습니다."),
+    BLOCK_PROMPT_VARIABLE_AMBIGUOUS(HttpStatus.BAD_REQUEST, "BLOCK40003", "동일한 프롬프트 변수가 여러 입력 영역에 존재합니다."),
+    BLOCK_PROMPT_TEMPLATE_NOT_FOUND(HttpStatus.NOT_FOUND, "BLOCK40401", "사용 가능한 블록 프롬프트 템플릿이 없습니다."),
+    BLOCK_STAGE_CONFIGURATION_INVALID(HttpStatus.INTERNAL_SERVER_ERROR, "BLOCK50001", "유효하지 않은 블록 단계 데이터가 존재합니다."),
+    BLOCK_PROMPT_CONVERSION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "BLOCK50002", "블록 프롬프트 변환 중 오류가 발생했습니다."),
+    BLOCK_PROMPT_TEMPLATE_STAGE_MISMATCH(HttpStatus.INTERNAL_SERVER_ERROR, "BLOCK50003", "블록과 프롬프트 템플릿의 단계가 일치하지 않습니다.");
 
 	private final HttpStatus httpStatus;
 	private final String code;
