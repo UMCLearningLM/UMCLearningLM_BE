@@ -1,16 +1,16 @@
-package com.umc.learninglm.domain.flow.entity;
+package com.umc.learninglm.domain.block.entity;
 
-import com.umc.learninglm.domain.block.entity.Block;
+import com.umc.learninglm.domain.block.enums.BlockType;
 import com.umc.learninglm.global.common.BaseTimeEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -18,7 +18,13 @@ import org.hibernate.annotations.ColumnDefault;
 
 @Getter
 @Entity
-@Table(name = "prompt_templates")
+@Table(
+		name = "prompt_templates",
+		uniqueConstraints = @UniqueConstraint(
+				name = "uk_prompt_templates_key_version",
+				columnNames = {"template_key", "version"}
+		)
+)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class PromptTemplate extends BaseTimeEntity {
 
@@ -27,9 +33,9 @@ public class PromptTemplate extends BaseTimeEntity {
 	@Column(name = "prompt_template_id", nullable = false)
 	private Long promptTemplateId;
 
-	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "block_id")
-	private Block block;
+	@Enumerated(EnumType.STRING)
+	@Column(name = "stage", nullable = false, length = 50)
+	private BlockType stage;
 
 	@Column(name = "name", nullable = false, length = 100)
 	private String name;

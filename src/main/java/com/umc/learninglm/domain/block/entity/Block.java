@@ -8,10 +8,14 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -21,7 +25,13 @@ import org.hibernate.type.SqlTypes;
 
 @Getter
 @Entity
-@Table(name = "blocks")
+@Table(
+		name = "blocks",
+		uniqueConstraints = @UniqueConstraint(
+				name = "uk_blocks_block_key",
+				columnNames = "block_key"
+		)
+)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Block extends BaseTimeEntity {
 
@@ -29,6 +39,9 @@ public class Block extends BaseTimeEntity {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(name = "block_id", nullable = false)
 	private Long blockId;
+
+	@Column(name = "block_key", nullable = false, length = 30)
+	private String blockKey;
 
 	@Enumerated(EnumType.STRING)
 	@Column(name = "block_type", nullable = false, length = 50)
@@ -39,6 +52,13 @@ public class Block extends BaseTimeEntity {
 
 	@Column(name = "description", columnDefinition = "TEXT")
 	private String description;
+
+	@Column(name = "prompt_instruction", columnDefinition = "TEXT")
+	private String promptInstruction;
+
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "prompt_template_id")
+	private PromptTemplate promptTemplate;
 
 	@JdbcTypeCode(SqlTypes.JSON)
 	@Column(name = "input_schema", columnDefinition = "JSON")
