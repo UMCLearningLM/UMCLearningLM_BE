@@ -30,7 +30,6 @@ import com.umc.learninglm.domain.flow.enums.FlowDifficulty;
 import com.umc.learninglm.domain.flow.enums.FlowMode;
 import com.umc.learninglm.domain.flow.enums.FlowStatus;
 import com.umc.learninglm.domain.flow.enums.FlowVisibility;
-import com.umc.learninglm.domain.flow.repository.AiExecutionLogRepository;
 import com.umc.learninglm.domain.flow.repository.FlowBlockRepository;
 import com.umc.learninglm.domain.flow.repository.FlowBookmarkRepository;
 import com.umc.learninglm.domain.flow.repository.FlowCategoryRepository;
@@ -64,7 +63,6 @@ public class FlowService {
 	private final FlowCommentRepository flowCommentRepository;
 	private final FlowBookmarkRepository flowBookmarkRepository;
 	private final FlowTagRepository flowTagRepository;
-	private final AiExecutionLogRepository aiExecutionLogRepository;
 	private final BlockRepository blockRepository;
 	private final PromptTemplateRepository promptTemplateRepository;
 	private final CategoryRepository categoryRepository;
@@ -184,7 +182,7 @@ public class FlowService {
 		flowTagRepository.deleteByFlow_FlowId(flowId);
 		flowCategoryRepository.deleteByFlow_FlowId(flowId);
 		flowBlockRepository.deleteByFlow_FlowId(flowId);
-		aiExecutionLogRepository.deleteByFlow_FlowId(flowId);
+		// ai_execution_logs.flow_id는 ON DELETE SET NULL이라 명시적으로 지우지 않는다 — flow가 삭제돼도 실행 이력은 보존한다.
 		flowRepository.delete(flow);
 
 		return new FlowDeleteResponse(flowId, true);
