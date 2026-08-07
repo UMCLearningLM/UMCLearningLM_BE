@@ -22,7 +22,7 @@ public class GeminiClient {
 	public GeminiClient(
 			@Value("${gemini.base-url:https://generativelanguage.googleapis.com}") String baseUrl,
 			@Value("${gemini.api-key:}") String apiKey,
-			@Value("${gemini.model:gemini-3.6-flash}") String model,
+			@Value("${gemini.model:gemini-2.5-flash}") String model,
 			@Value("${gemini.connect-timeout-ms:3000}") long connectTimeoutMs,
 			@Value("${gemini.read-timeout-ms:20000}") long readTimeoutMs) {
 		ClientHttpRequestFactorySettings settings = ClientHttpRequestFactorySettings.defaults()
