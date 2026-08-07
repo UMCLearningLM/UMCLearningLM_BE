@@ -81,10 +81,18 @@ public enum ErrorCode {
 
     // Storage
     STORAGE_INVALID_PARAMETER(HttpStatus.BAD_REQUEST, "STORAGE40001", "유효하지 않은 조회 파라미터입니다."),
-  
+
     // Block
     BLOCK_INVALID_STAGE(HttpStatus.BAD_REQUEST,"BLOCK40001", "유효하지 않은 stage 값입니다."),
-    BLOCK_STAGE_CONFIGURATION_INVALID(HttpStatus.INTERNAL_SERVER_ERROR, "BLOCK50001", "유효하지 않은 블록 단계 데이터가 존재합니다.");
+    BLOCK_STAGE_CONFIGURATION_INVALID(HttpStatus.INTERNAL_SERVER_ERROR, "BLOCK50001", "유효하지 않은 블록 단계 데이터가 존재합니다."),
+
+    // Flow
+    FLOW_INVALID_REQUEST(HttpStatus.BAD_REQUEST, "FLOW40001", "잘못된 요청입니다."),
+    FLOW_OPTIONS_PARSE_FAILED(HttpStatus.BAD_REQUEST, "FLOW40003", "블록 옵션을 파싱할 수 없습니다."),
+    FLOW_OWNER_MISMATCH(HttpStatus.FORBIDDEN, "FLOW40301", "흐름 소유자가 아닙니다."),
+    FLOW_NOT_FOUND(HttpStatus.NOT_FOUND, "FLOW40401", "존재하지 않는 흐름입니다."),
+    FLOW_BLOCK_NOT_FOUND(HttpStatus.NOT_FOUND, "FLOW40402", "존재하지 않는 블록입니다."),
+    FLOW_ORIGIN_NOT_FOUND(HttpStatus.NOT_FOUND, "FLOW40403", "복사할 원본 흐름을 찾을 수 없습니다.");
 
 	private final HttpStatus httpStatus;
 	private final String code;
