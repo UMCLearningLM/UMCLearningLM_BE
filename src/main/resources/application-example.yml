@@ -21,7 +21,7 @@ jwt:
 gemini:
   base-url: https://generativelanguage.googleapis.com
   api-key: ${GEMINI_API_KEY}
-  model: gemini-2.0-flash
+  model: gemini-3.6-flash
 
 springdoc:
   swagger-ui:
