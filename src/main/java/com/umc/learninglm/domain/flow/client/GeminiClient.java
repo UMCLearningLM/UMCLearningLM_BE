@@ -55,10 +55,22 @@ public class GeminiClient {
 				.retrieve()
 				.body(GeminiResponse.class);
 
-		if (response == null || response.candidates() == null || response.candidates().isEmpty()) {
-			throw new IllegalStateException("Gemini 응답에 candidates가 없습니다.");
+		String text = extractText(response);
+		if (text == null || text.isBlank()) {
+			throw new IllegalStateException("Gemini 응답에서 유효한 텍스트를 찾을 수 없습니다. (안전 필터 차단 가능성 포함)");
 		}
-		return response.candidates().get(0).content().parts().get(0).text();
+		return text;
+	}
+
+	private String extractText(GeminiResponse response) {
+		if (response == null || response.candidates() == null || response.candidates().isEmpty()) {
+			return null;
+		}
+		GeminiContent content = response.candidates().get(0).content();
+		if (content == null || content.parts() == null || content.parts().isEmpty()) {
+			return null;
+		}
+		return content.parts().get(0).text();
 	}
 }
 
