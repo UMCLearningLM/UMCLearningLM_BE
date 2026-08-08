@@ -6,6 +6,8 @@ import com.umc.learninglm.domain.flow.dto.harness.CompiledAiHarness;
 
 public interface AiModelClient {
 
+	String modelName();
+
 	AiGenerationResult generate(
 			CompiledAiHarness harness,
 			AiModelConfiguration configuration

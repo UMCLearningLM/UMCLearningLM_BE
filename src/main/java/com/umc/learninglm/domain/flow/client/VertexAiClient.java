@@ -43,10 +43,17 @@ public class VertexAiClient implements AiModelClient {
 			@Value("${GOOGLE_CLOUD_LOCATION:global}") String location,
 			@Value("${GOOGLE_AI_MODEL:gemini-2.5-flash}") String model,
 			@Value("${GCP_SERVICE_ACCOUNT_JSON_BASE64:}") String credentialBase64,
-			@Value("${ai.vertex.connect-timeout-ms:5000}") long connectTimeoutMs,
-			@Value("${ai.vertex.read-timeout-ms:90000}") long readTimeoutMs,
+			@Value("${ai.vertex.connect-timeout-ms:${AI_CONNECT_TIMEOUT_MS:5000}}") long connectTimeoutMs,
+			@Value("${ai.vertex.read-timeout-ms:${AI_READ_TIMEOUT_MS:90000}}") long readTimeoutMs,
 			ObjectMapper objectMapper
 	) {
+		if (project == null || project.isBlank()
+				|| location == null || location.isBlank()
+				|| model == null || model.isBlank()
+				|| connectTimeoutMs <= 0
+				|| readTimeoutMs <= 0) {
+			throw new IllegalArgumentException("Vertex AI 환경변수 설정이 올바르지 않습니다.");
+		}
 		this.project = project;
 		this.location = location;
 		this.model = model;
@@ -59,6 +66,11 @@ public class VertexAiClient implements AiModelClient {
 						readTimeoutMs
 				))
 				.build();
+	}
+
+	@Override
+	public String modelName() {
+		return model;
 	}
 
 	@Override
