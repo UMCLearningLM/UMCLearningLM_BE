@@ -12,7 +12,7 @@ public record FlowDetailResponse(
 		@Schema(example = "리뷰 더미에서 장단점을 추출") String summary,
 		@Schema(example = "여러 리뷰를 비교해 핵심만 정리") String purpose,
 		@Schema(description = "난이도 코드", example = "BASIC", allowableValues = {"BEGINNER", "BASIC", "ADVANCED"}) String difficulty,
-		@Schema(description = "카테고리 정보") FlowCategoryResponse category,
+		@Schema(description = "카테고리 목록 (다대다)") List<FlowCategoryResponse> categories,
 		@Schema(description = "생성 모드", example = "CREATE", allowableValues = {"GUIDED", "CREATE"}) String mode,
 		@Schema(description = "흐름 유형", example = "USER") String flowType,
 		@Schema(description = "공개 범위", example = "PRIVATE", allowableValues = {"PRIVATE", "PUBLIC"}) String visibility,

@@ -1,22 +1,22 @@
 package com.umc.learninglm.domain.flow.entity;
 
 import com.umc.learninglm.domain.category.entity.Category;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Getter
 @Entity
-@Table(name = "flow_categories")
+@Table(
+        name = "flow_categories",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uq_flow_category",
+                        columnNames = {"flow_id", "category_id"}
+                )
+        }
+)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class FlowCategory {
 
@@ -32,4 +32,11 @@ public class FlowCategory {
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "category_id", nullable = false)
 	private Category category;
+
+	public static FlowCategory create(Flow flow, Category category) {
+		FlowCategory flowCategory = new FlowCategory();
+		flowCategory.flow = flow;
+		flowCategory.category = category;
+		return flowCategory;
+	}
 }

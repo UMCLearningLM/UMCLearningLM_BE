@@ -83,4 +83,36 @@ public class Flow extends BaseTimeEntity {
 	@Enumerated(EnumType.STRING)
 	@Column(name = "mode", nullable = false, length = 30)
 	private FlowMode mode;
+
+	public static Flow create(User user, Tutorial tutorial, Flow originFlow, FlowMode mode) {
+		Flow flow = new Flow();
+		flow.user = user;
+		flow.tutorial = tutorial;
+		flow.originFlow = originFlow;
+		flow.mode = mode;
+		flow.title = "제목 없는 흐름";
+		flow.difficulty = FlowDifficulty.BEGINNER;
+		return flow;
+	}
+
+	public void updateDetails(
+			String title,
+			String summary,
+			String purpose,
+			FlowDifficulty difficulty,
+			FlowVisibility visibility,
+			FlowStatus status,
+			String authorNote,
+			String exampleInput,
+			String exampleResult) {
+		this.title = title;
+		this.summary = summary;
+		this.purpose = purpose;
+		this.difficulty = difficulty;
+		this.visibility = visibility;
+		this.status = status;
+		this.authorNote = authorNote;
+		this.exampleInput = exampleInput;
+		this.exampleResult = exampleResult;
+	}
 }
