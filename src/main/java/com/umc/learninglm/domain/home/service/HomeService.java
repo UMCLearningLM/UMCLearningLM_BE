@@ -6,9 +6,11 @@ import com.umc.learninglm.domain.flow.repository.FlowCategoryRepository;
 import com.umc.learninglm.domain.flow.repository.FlowRepository;
 import com.umc.learninglm.domain.home.dto.query.*;
 import com.umc.learninglm.domain.home.dto.response.HomeResponse;
+import com.umc.learninglm.domain.tutorial.enums.SavedTutorialStatus;
 import com.umc.learninglm.domain.tutorial.repository.SavedTutorialRepository;
 import com.umc.learninglm.domain.tutorial.repository.TutorialCategoryRepository;
 import com.umc.learninglm.domain.tutorial.repository.TutorialRepository;
+import com.umc.learninglm.domain.tutorial.service.TutorialProgressCalculator;
 import com.umc.learninglm.domain.auth.entity.User;
 import com.umc.learninglm.domain.auth.repository.UserRepository;
 import com.umc.learninglm.global.error.ErrorCode;
@@ -132,15 +134,17 @@ public class HomeService {
                 .map(query -> {
                     int totalSteps = query.totalSteps().intValue();
 
-                    // 현재 학습 중인 단계의 이전 단계까지 완료한 것으로 계산
-                    int completedStepCount = Math.max(
-                            query.currentStepOrder() - 1,
-                            0
-                    );
+                    int completedStepCount =
+                            TutorialProgressCalculator.completedStepCount(
+                                    query.currentStepOrder()
+                            );
 
-                    int progressRate = totalSteps == 0
-                            ? 0
-                            : completedStepCount * 100 / totalSteps;
+                    int progressRate =
+                            TutorialProgressCalculator.progressRate(
+                                    SavedTutorialStatus.valueOf(query.status()),
+                                    query.currentStepOrder(),
+                                    totalSteps
+                            );
 
                     return new HomeResponse.ContinueLearningResponse(
                             query.tutorialId(),
