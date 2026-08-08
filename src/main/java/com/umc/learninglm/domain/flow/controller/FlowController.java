@@ -106,7 +106,7 @@ public class FlowController {
 	}
 
 	@PostMapping("/{flowId}/preview")
-	@Operation(summary = "예시 결과 생성 (Gemini+Fallback)", description = "조립한 흐름으로 프롬프트를 만들어 AI 예시 결과를 생성합니다. AI가 실패해도 200과 함께 TEMPLATE Fallback으로 응답합니다.",
+	@Operation(summary = "예시 결과 생성 (Vertex AI+Fallback)", description = "블록별 프롬프트를 단계 순서로 조립하고 자동 Thinking 정책을 적용해 Vertex AI로 예시 결과를 생성합니다. 모델 호출이 실패하면 200과 함께 TEMPLATE Fallback으로 응답합니다.",
 			security = @SecurityRequirement(name = "bearerAuth"))
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "예시 결과 생성 성공 (AI 타임아웃/오류 시 TEMPLATE Fallback 반환)"),
