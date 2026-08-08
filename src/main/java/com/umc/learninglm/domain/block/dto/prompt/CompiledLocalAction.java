@@ -1,11 +1,10 @@
-package com.umc.learninglm.domain.flow.dto.harness;
+package com.umc.learninglm.domain.block.dto.prompt;
 
-import com.umc.learninglm.domain.block.dto.prompt.PromptArtifactValue;
 import com.umc.learninglm.domain.block.enums.PromptExecutionType;
 import java.util.List;
 import java.util.Map;
 
-public record LocalPostAction(
+public record CompiledLocalAction(
 		String nodeId,
 		Long blockId,
 		Integer blockOrder,

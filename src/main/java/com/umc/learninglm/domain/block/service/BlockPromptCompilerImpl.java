@@ -1,13 +1,20 @@
 package com.umc.learninglm.domain.block.service;
 
 import com.umc.learninglm.domain.block.dto.prompt.BlockPromptCompileRequest;
+import com.umc.learninglm.domain.block.dto.prompt.BlockPromptCompileResult;
+import com.umc.learninglm.domain.block.dto.prompt.CompiledLocalAction;
 import com.umc.learninglm.domain.block.dto.prompt.CompiledPromptFragment;
+import com.umc.learninglm.domain.block.dto.prompt.PromptArtifactValue;
 import com.umc.learninglm.domain.block.dto.prompt.PromptFragment;
 import com.umc.learninglm.domain.block.dto.prompt.PromptFragmentRequest;
 import com.umc.learninglm.domain.block.entity.Block;
+import com.umc.learninglm.domain.block.entity.PromptTemplate;
+import com.umc.learninglm.domain.block.enums.ExecutionMode;
+import com.umc.learninglm.domain.block.enums.PromptExecutionType;
 import com.umc.learninglm.domain.block.repository.BlockPromptBatchRepository;
 import com.umc.learninglm.global.error.CustomException;
 import com.umc.learninglm.global.error.ErrorCode;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -25,11 +32,11 @@ public class BlockPromptCompilerImpl implements BlockPromptCompiler {
 	private final BlockPromptRenderer blockPromptRenderer;
 
 	@Override
-	public List<CompiledPromptFragment> compile(
+	public BlockPromptCompileResult compile(
 			List<BlockPromptCompileRequest> requests
 	) {
 		if (requests == null || requests.isEmpty()) {
-			return List.of();
+			return new BlockPromptCompileResult(List.of(), List.of());
 		}
 
 		List<Long> blockIds = requests.stream()
@@ -37,27 +44,43 @@ public class BlockPromptCompilerImpl implements BlockPromptCompiler {
 				.distinct()
 				.toList();
 		Map<Long, Block> blockById = blockPromptBatchRepository
-				.findAllWithActivePromptTemplateByBlockIdIn(blockIds)
+				.findAllWithPromptTemplateByBlockIdIn(blockIds)
 				.stream()
 				.collect(Collectors.toMap(
 						Block::getBlockId,
 						Function.identity()
 				));
 
-		return requests.stream()
-				.map(request -> compile(request, blockById))
-				.toList();
+		List<CompiledPromptFragment> promptFragments = new ArrayList<>();
+		List<CompiledLocalAction> localActions = new ArrayList<>();
+		requests.forEach(request -> compile(
+				request,
+				blockById,
+				promptFragments,
+				localActions
+		));
+
+		return new BlockPromptCompileResult(promptFragments, localActions);
 	}
 
-	private CompiledPromptFragment compile(
+	private void compile(
 			BlockPromptCompileRequest request,
-			Map<Long, Block> blockById
+			Map<Long, Block> blockById,
+			List<CompiledPromptFragment> promptFragments,
+			List<CompiledLocalAction> localActions
 	) {
 		Block block = blockById.get(request.blockId());
 		if (block == null) {
 			throw new CustomException(ErrorCode.BLOCK_PROMPT_TEMPLATE_NOT_FOUND);
 		}
 
+		PromptExecutionType executionType = resolveExecutionType(request, block);
+		if (isLocalExecution(executionType)) {
+			localActions.add(toLocalAction(request, executionType));
+			return;
+		}
+
+		validateActiveTemplate(block.getPromptTemplate());
 		PromptFragment fragment = blockPromptRenderer.render(
 				block,
 				new PromptFragmentRequest(
@@ -69,11 +92,66 @@ public class BlockPromptCompilerImpl implements BlockPromptCompiler {
 				)
 		);
 
-		return new CompiledPromptFragment(
+		promptFragments.add(new CompiledPromptFragment(
 				request.nodeId(),
-				request.executionType(),
+				executionType,
 				fragment,
-				request.artifacts() == null ? List.of() : List.copyOf(request.artifacts())
+				normalizeArtifacts(request.artifacts())
+		));
+	}
+
+	private boolean isLocalExecution(PromptExecutionType executionType) {
+		return executionType == PromptExecutionType.LOCAL_TRANSFORM
+				|| executionType == PromptExecutionType.PERSISTENCE;
+	}
+
+	private CompiledLocalAction toLocalAction(
+			BlockPromptCompileRequest request,
+			PromptExecutionType executionType
+	) {
+		return new CompiledLocalAction(
+				request.nodeId(),
+				request.blockId(),
+				request.blockOrder(),
+				executionType,
+				normalizeMap(request.input()),
+				normalizeMap(request.options()),
+				normalizeMap(request.resolvedContext()),
+				normalizeArtifacts(request.artifacts())
 		);
+	}
+
+	private void validateActiveTemplate(PromptTemplate promptTemplate) {
+		if (promptTemplate == null
+				|| !Boolean.TRUE.equals(promptTemplate.getActive())) {
+			throw new CustomException(ErrorCode.BLOCK_PROMPT_TEMPLATE_NOT_FOUND);
+		}
+	}
+
+	private Map<String, Object> normalizeMap(Map<String, Object> value) {
+		return value == null ? Map.of() : value;
+	}
+
+	private List<PromptArtifactValue> normalizeArtifacts(
+			List<PromptArtifactValue> value
+	) {
+		return value == null ? List.of() : List.copyOf(value);
+	}
+
+	private PromptExecutionType resolveExecutionType(
+			BlockPromptCompileRequest request,
+			Block block
+	) {
+		if (request.executionType() != null) {
+			return request.executionType();
+		}
+		if (block.getDefaultExecutionMode() == ExecutionMode.SYSTEM) {
+			return PromptExecutionType.PERSISTENCE;
+		}
+
+		return switch (block.getBlockType()) {
+			case INPUT, CONTEXT -> PromptExecutionType.CONFIG_ONLY;
+			case PROCESS, REVIEW, OUTPUT -> PromptExecutionType.AI_INSTRUCTION;
+		};
 	}
 }

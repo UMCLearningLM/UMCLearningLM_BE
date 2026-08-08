@@ -12,11 +12,10 @@ public interface BlockPromptBatchRepository extends Repository<Block, Long> {
 	@Query("""
 			select b
 			from Block b
-			join fetch b.promptTemplate pt
+			left join fetch b.promptTemplate
 			where b.blockId in :blockIds
-			  and pt.active = true
 			""")
-	List<Block> findAllWithActivePromptTemplateByBlockIdIn(
+	List<Block> findAllWithPromptTemplateByBlockIdIn(
 			@Param("blockIds") Collection<Long> blockIds
 	);
 }

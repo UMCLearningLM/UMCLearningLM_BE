@@ -2,6 +2,7 @@ package com.umc.learninglm.domain.flow.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.umc.learninglm.domain.block.dto.prompt.CompiledLocalAction;
 import com.umc.learninglm.domain.block.dto.prompt.CompiledPromptFragment;
 import com.umc.learninglm.domain.block.dto.prompt.PromptArtifactValue;
 import com.umc.learninglm.domain.block.enums.BlockType;
@@ -16,11 +17,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Service
-@RequiredArgsConstructor
 public class AiHarnessCompilerImpl implements AiHarnessCompiler {
 
 	private static final String SYSTEM_INSTRUCTION = """
@@ -28,14 +28,43 @@ public class AiHarnessCompilerImpl implements AiHarnessCompiler {
             각 섹션과 블록 지시를 순서대로 반영하고 최종 결과는 지정된 JSON Schema에 맞춰 한 번만 반환합니다.
             제공되지 않은 근거나 사실을 임의로 생성하지 않습니다.
             """;
-	private static final int DEFAULT_OUTPUT_TOKENS = 2048;
-	private static final int APPROXIMATE_CHARACTERS_PER_TOKEN = 3;
+	private static final String DEFAULT_GLOBAL_OUTPUT_POLICY = """
+			사용자가 지정한 출력 형식, 분량, 항목 수를 최우선으로 따릅니다.
+			별도 지정이 없으면 핵심 내용만 간결하게 작성하고 중복 설명과 불필요한 서론을 생략합니다.
+			출력이 길어질 경우 결론과 주요 근거를 먼저 작성합니다.
+			""";
 
 	private final ObjectMapper objectMapper;
+	private final String globalOutputPolicy;
+	private final int defaultOutputTokens;
+	private final int approximateCharactersPerToken;
+
+	public AiHarnessCompilerImpl(
+			ObjectMapper objectMapper,
+			@Value("${ai.prompt.global-output-policy:${AI_GLOBAL_OUTPUT_POLICY:}}")
+			String globalOutputPolicy,
+			@Value("${ai.generation.default-output-tokens:${AI_DEFAULT_OUTPUT_TOKENS:4096}}")
+			int defaultOutputTokens,
+			@Value("${ai.generation.token-estimate-characters-per-token:${AI_TOKEN_ESTIMATE_CHARACTERS_PER_TOKEN:3}}")
+			int approximateCharactersPerToken
+	) {
+		this.objectMapper = objectMapper;
+		this.globalOutputPolicy = globalOutputPolicy == null
+				|| globalOutputPolicy.isBlank()
+				? DEFAULT_GLOBAL_OUTPUT_POLICY
+				: globalOutputPolicy.trim();
+		this.defaultOutputTokens = defaultOutputTokens;
+		this.approximateCharactersPerToken = approximateCharactersPerToken;
+		if (defaultOutputTokens <= 0 || approximateCharactersPerToken <= 0) {
+			throw new IllegalArgumentException("AI 토큰 환경변수 설정이 올바르지 않습니다.");
+		}
+	}
 
 	@Override
 	public CompiledAiHarness compile(HarnessCompileRequest request) {
 		List<CompiledPromptFragment> fragments = sortedFragments(request.fragments());
+		List<CompiledLocalAction> localActions =
+				sortedLocalActions(request.localActions());
 		List<CompiledPromptFragment> modelFragments = fragments.stream()
 				.filter(this::isModelInput)
 				.toList();
@@ -95,17 +124,23 @@ public class AiHarnessCompilerImpl implements AiHarnessCompiler {
 
 		int estimatedOutputTokens = request.estimatedOutputTokens() == null
 				|| request.estimatedOutputTokens() <= 0
-				? DEFAULT_OUTPUT_TOKENS
+				? defaultOutputTokens
 				: request.estimatedOutputTokens();
 
 		return new CompiledAiHarness(
-				SYSTEM_INSTRUCTION,
+				buildSystemInstruction(),
 				prompt.toString().trim(),
 				responseSchema,
-				postActions(fragments),
-				estimateTokens(SYSTEM_INSTRUCTION + prompt),
+				postActions(localActions),
+				estimateTokens(buildSystemInstruction() + prompt),
 				estimatedOutputTokens
 		);
+	}
+
+	private String buildSystemInstruction() {
+		return SYSTEM_INSTRUCTION.trim()
+				+ "\n\n[GLOBAL OUTPUT POLICY]\n"
+				+ globalOutputPolicy;
 	}
 
 	private List<CompiledPromptFragment> sortedFragments(
@@ -120,6 +155,21 @@ public class AiHarnessCompilerImpl implements AiHarnessCompiler {
 						.comparingInt((CompiledPromptFragment fragment) ->
 						fragment.fragment().stage().ordinal())
 						.thenComparingInt(fragment -> fragment.fragment().blockOrder()))
+				.toList();
+	}
+
+	private List<CompiledLocalAction> sortedLocalActions(
+			List<CompiledLocalAction> localActions
+	) {
+		if (localActions == null) {
+			return List.of();
+		}
+
+		return localActions.stream()
+				.sorted(Comparator.comparingInt(action ->
+						action.blockOrder() == null
+								? Integer.MAX_VALUE
+								: action.blockOrder()))
 				.toList();
 	}
 
@@ -181,17 +231,18 @@ public class AiHarnessCompilerImpl implements AiHarnessCompiler {
 	}
 
 	private List<LocalPostAction> postActions(
-			List<CompiledPromptFragment> fragments
+			List<CompiledLocalAction> localActions
 	) {
-		return fragments.stream()
-				.filter(fragment -> fragment.executionType()
-						== PromptExecutionType.LOCAL_TRANSFORM
-						|| fragment.executionType()
-						== PromptExecutionType.PERSISTENCE)
-				.map(fragment -> new LocalPostAction(
-						fragment.nodeId(),
-						fragment.fragment().blockId(),
-						fragment.executionType()
+		return localActions.stream()
+				.map(action -> new LocalPostAction(
+						action.nodeId(),
+						action.blockId(),
+						action.blockOrder(),
+						action.executionType(),
+						action.input(),
+						action.options(),
+						action.resolvedContext(),
+						action.artifacts()
 				))
 				.toList();
 	}
@@ -220,8 +271,8 @@ public class AiHarnessCompilerImpl implements AiHarnessCompiler {
 	private int estimateTokens(CharSequence text) {
 		return Math.max(
 				1,
-				(text.length() + APPROXIMATE_CHARACTERS_PER_TOKEN - 1)
-						/ APPROXIMATE_CHARACTERS_PER_TOKEN
+				(text.length() + approximateCharactersPerToken - 1)
+						/ approximateCharactersPerToken
 		);
 	}
 
