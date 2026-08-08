@@ -11,7 +11,18 @@ import org.junit.jupiter.api.Test;
 
 class AiThinkingPolicyTest {
 
-    private final AiThinkingPolicy policy = new AiThinkingPolicy();
+    private final AiThinkingPolicy policy = new AiThinkingPolicy(
+            3,
+            6,
+            2000,
+            4000,
+            1024,
+            8192,
+            0.2,
+            0,
+            256,
+            512
+    );
 
     @Test
     void selectsOffAndAppliesMinimumOutputLimitForSmallRequest() {

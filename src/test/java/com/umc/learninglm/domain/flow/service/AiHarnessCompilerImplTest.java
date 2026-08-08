@@ -3,6 +3,7 @@ package com.umc.learninglm.domain.flow.service;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.umc.learninglm.domain.block.dto.prompt.CompiledLocalAction;
 import com.umc.learninglm.domain.block.dto.prompt.CompiledPromptFragment;
 import com.umc.learninglm.domain.block.dto.prompt.PromptArtifactValue;
 import com.umc.learninglm.domain.block.dto.prompt.PromptFragment;
@@ -17,8 +18,16 @@ import org.junit.jupiter.api.Test;
 
 class AiHarnessCompilerImplTest {
 
+    private static final String GLOBAL_OUTPUT_POLICY =
+            "별도 지정이 없으면 핵심 내용부터 간결하게 작성합니다.";
+
     private final AiHarnessCompiler compiler =
-            new AiHarnessCompilerImpl(new ObjectMapper());
+            new AiHarnessCompilerImpl(
+                    new ObjectMapper(),
+                    GLOBAL_OUTPUT_POLICY,
+                    4096,
+                    3
+            );
 
     @Test
     void compilesFragmentsIntoOneOrderedHarness() {
@@ -85,6 +94,16 @@ class AiHarnessCompilerImplTest {
                         "업로드한 코드를 검토해 주세요.",
                         "코드 리팩토링",
                         fragments,
+                        List.of(new CompiledLocalAction(
+                                "save",
+                                6L,
+                                6,
+                                PromptExecutionType.PERSISTENCE,
+                                Map.of("title", "review result"),
+                                Map.of("tags", List.of("review")),
+                                Map.of(),
+                                List.of()
+                        )),
                         Map.of(),
                         4096
                 )
@@ -104,12 +123,19 @@ class AiHarnessCompilerImplTest {
                 .isLessThan(result.prompt().indexOf("[REVIEW CRITERIA]"));
         assertThat(result.prompt().indexOf("[REVIEW CRITERIA]"))
                 .isLessThan(result.prompt().indexOf("[OUTPUT REQUIREMENTS]"));
+        assertThat(result.systemInstruction())
+                .contains("[GLOBAL OUTPUT POLICY]")
+                .contains(GLOBAL_OUTPUT_POLICY);
         assertThat(result.postActions())
                 .singleElement()
                 .satisfies(action -> {
                     assertThat(action.nodeId()).isEqualTo("save");
                     assertThat(action.executionType())
                             .isEqualTo(PromptExecutionType.PERSISTENCE);
+                    assertThat(action.blockOrder()).isEqualTo(6);
+                    assertThat(action.input())
+                            .containsEntry("title", "review result");
+                    assertThat(action.options()).containsKey("tags");
                 });
         assertThat(result.responseSchema()).containsKey("properties");
         assertThat(result.estimatedInputTokens()).isPositive();
